@@ -2,7 +2,7 @@
 "name": "Stock Locator",
 "short_name": "Stock Locator",
 "description": "CSV stock locator with 6-column import and two-field search. PWAs.",
-"start_url": "./stock_locator_enhanced_pwa.html",
+"start_url": "./index.html",
 "scope": "./",
 "display": "standalone",
 "background_color": "#f5f5f5",
