@@ -159,7 +159,6 @@ var allData = [];
 var filteredData = [];
 
 // UI
-var fileInput = document.getElementById('fileInput');
 var resultsTableBody = document.querySelector('#resultsTable tbody');
 var status = document.getElementById('status');
 var summary = document.getElementById('summary');
@@ -324,14 +323,6 @@ localStorage.removeItem(USER_OVERRIDE_KEY);
 renderTable();
 status.textContent = 'Data cleared';
 localStorage.removeItem(STORAGE_VERSION_KEY);
-});
-
-/* File input (override) */
-fileInput.addEventListener('change', function(e){
-var file = e.target.files && e.target.files[0];
-if (file){
-loadCSVFile(file);
-}
 });
 
 /* Live search (not active in this lean version) - you can add if desired */
