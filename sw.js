@@ -2,7 +2,7 @@
 'use strict';
 var CACHE_NAME = 'stock-locator-cache-v1';
 var urlsToCache = [
-'stock_locator_enhanced.html',
+'index.html',
 'manifest.json'
 ];
 
