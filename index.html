@@ -5,15 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Stock Locator - PWA Enhanced (6-column CSV + two-field search)</title>
 
-<!-- PWA manifest -->
 <link rel="manifest" href="manifest.json">
 
-<!-- iOS meta for home screen experience -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<!-- Optional: provide an iOS home-screen icon if you add real icons -->
-<!-- <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"> -->
 
 <style>
 :root{
@@ -45,21 +40,17 @@ input[type="file"]{font-size:14px}
 input[type="text"]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;width:100%;max-width:340px}
 button{color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
 button.accent{ background: var(--accent); }
-button.fixed{ background: #2e8b57; } /* fixed color for primary actions on each row */
+button.fixed{ background: #2e8b57; }
 button.secondary{ background:#666; }
 
-/* Right-aligned button area (always on the right) */
 .controlsRow { display:flex; gap:12px; align-items:flex-start; width:100%; }
 .leftCol { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
 .rightCol { display:flex; align-items:center; justify-content:flex-end; white-space:nowrap; }
 
-/* Keep the 3 primary action buttons on one line by default, wrap on small screens */
 .btnGroup { display:flex; gap:8px; align-items:center; }
 
-/* Two-field search label sizing (keep same font size as the Part Number label) */
 .orSupplierLine { margin:6px 0 6px 0; font-weight:600; font-size:16px; color: var(--muted); }
 
-/* Mobile tweaks: stack controls nicely */
 @media (max-width: 700px){
 .controlsRow { flex-direction: column; align-items: stretch; }
 .rightCol { justify-content: flex-start; }
@@ -67,7 +58,7 @@ button.secondary{ background:#666; }
 .btnGroup { width: 100%; justify-content: flex-end; }
 }
 
-/* Responsive, mobile-friendly 6-column results table with clean borders */
+/* Mobile-friendly, readable 6-column table with borders that don’t collide with card border */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.resultsTable {
 width: 100%;
@@ -79,21 +70,21 @@ table.resultsTable td {
 border: 1px solid #ddd;
 padding: 8px;
 text-align: left;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
+white-space: normal;
+word-break: break-word;
 }
-table.resultsTable thead th { background: #f0f0f0; }
+table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 table.resultsTable th:last-child,
-table.resultsTable td:last-child { border-right: 0; } /* avoid double-right edge with card border */
-/* Remove bottom border on last row for a clean card boundary on borders */
+table.resultsTable td:last-child { border-right: 0; }
+/* Slightly soften the bottom border so the card boundary stays clean on mobile */
 table.resultsTable tbody tr:last-child td { border-bottom: 0; }
 
-[data-theme="dark"] th { color: #000; } /* readable headers in dark mode */
+[data-theme="dark"] th { color: #000; }
+
 .muted{color:var(--muted);font-size:12px}
 #scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
 #scannerBox{width:90%;max-width:600px;background:#111;border-radius:12px;padding:12px;position:relative}
-#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block}
+#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block;}
 #scannerClose{position:absolute;top:6px;right:6px;background:#333;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer}
 #useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
 @media (max-width: 700px){
@@ -115,7 +106,6 @@ input:focus{ border-color: var(--accent); }
 <main>
 <section class="card" aria-label="data controls">
 <div class="controlsRow" style="gap:12px;align-items:flex-start">
-<!-- Left side: CSV input + searches -->
 <div class="leftCol" style="min-width:0;">
 <div>
 <label for="fileInput" class="label">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
@@ -126,14 +116,12 @@ input:focus{ border-color: var(--accent); }
 <div style="flex:1 1 auto; min-width:0;">
 <label for="searchBox" class="label">Search Part Number</label><br/>
 <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1 or TPMT 2-1*" />
-<!-- Keep font size of the line consistent with the Part Number label -->
 <div class="orSupplierLine">or Supplier Reference</div>
 <input id="supplierBox" type="text" placeholder="Supplier Reference" />
 </div>
 </div>
 </div>
 
-<!-- Right side: fixed-position action buttons on the right -->
 <div class="rightCol" aria-label="action buttons">
 <div class="btnGroup" style="gap:8px; align-items:stretch;">
 <button id="scanBtn" class="fixed" title="Scan barcode using camera">Scan Barcode</button>
@@ -152,7 +140,6 @@ input:focus{ border-color: var(--accent); }
 </div>
 <div id="status" class="muted" style="margin-top:8px">No data loaded yet. Load a CSV to begin.</div>
 
-<!-- Tiny helper: load sample data for quick start (optional) -->
 <div style="margin-top:6px;">
 <button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px; display:inline-block;">
 Load sample demo data
@@ -185,12 +172,12 @@ Load sample demo data
 </section>
 </main>
 
-<!-- Barcode scanner overlay (hidden by default) -->
+<!-- Barcode scanner overlay -->
 <div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
 <div id="scannerBox" style="position:relative;">
 <button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
 <video id="scannerVideo" autoplay playsinline></video>
-<button id="useCodeBtn" title="Use detected code" class="accent" style="display:none;">Use this code</button>
+<button id="useCodeBtn" title="Use detected code" class="accent" style="display:none; z-index:2;">Use this code</button>
 </div>
 </div>
 
@@ -202,11 +189,9 @@ var SAMPLE_DATA = [
 { dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
 ];
 
-// Data holders
 var allData = [];
 var filteredData = [];
 
-// UI elements
 var fileInput = document.getElementById('fileInput');
 var searchBox = document.getElementById('searchBox');
 var supplierBox = document.getElementById('supplierBox');
@@ -227,20 +212,17 @@ var scannerClose = document.getElementById('scannerClose');
 var useCodeBtn = document.getElementById('useCodeBtn');
 var loadSampleBtn = document.getElementById('loadSampleBtn');
 
-// Local storage keys
+// Storage keys
 var ACCENT_KEY = 'sl_accent';
 var THEME_KEY = 'sl_theme';
 var LAST_DATA_KEY = 'sl_lastData';
 
-// Barcode/Camera helpers
+// Barcode helpers
 var videoStream = null;
 var detector = null;
 var streamActive = false;
 var lastDetectedCode = '';
 var lastUsedCode = '';
-
-var AX_SYNC_URL = ''; // optional endpoint (not used in this drop)
-
 
 // Helpers
 function escapeHtml(text){
@@ -289,7 +271,6 @@ for (var j = 0; j < headers.length; j++){
 lower.push((headers[j] || '').toString().toLowerCase().trim());
 }
 
-// indexes
 var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
 for (var k = 0; k < lower.length; k++){
 var h = lower[k];
@@ -300,7 +281,6 @@ if (iP === -1 && h.indexOf('part') !== -1) iP = k;
 if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
 if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
 }
-// fallbacks
 if (iDept === -1) for (var t=0; t<lower.length; t++){ if (lower[t].indexOf('dept') !== -1 || lower[t].indexOf('department') !== -1) { iDept = t; break; } }
 if (iW === -1) for (var t2=0; t2<lower.length; t2++){ if (lower[t2].indexOf('warehouse') !== -1) { iW = t2; break; } }
 if (iSR === -1) for (var t3=0; t3<lower.length; t3++){ if (lower[t3].indexOf('supplier') !== -1 && lower[t3].indexOf('reference') !== -1) { iSR = t3; break; } }
@@ -330,7 +310,6 @@ rows.push({ dept: dept, warehouse: w, supplierRef: sr, part: p, sub: s, qty: q }
 return rows;
 }
 
-// Simple case-insensitive contains
 function matchesQuery(value, query){
 var q = (query || '').toString().trim();
 if (q.length === 0) return true;
@@ -338,7 +317,7 @@ var v = (value || '').toString().toLowerCase().trim();
 return v.indexOf(q.toLowerCase()) !== -1;
 }
 
-// Render table
+// Render
 function renderTable(){
 var partQuery = (searchBox.value || '').toString().trim();
 var supplierQuery = (supplierBox.value || '').toString().trim();
@@ -358,7 +337,6 @@ rows.push(row);
 }
 filteredData = rows;
 
-// Build table
 resultsTableBody.innerHTML = '';
 for (var j = 0; j < rows.length; j++){
 var r = rows[j];
@@ -377,7 +355,44 @@ noResults.style.display = (rows.length === 0) ? 'block' : 'none';
 summary.textContent = 'Records: ' + rows.length;
 }
 
-// Load CSV file
+// CSV export (with proper CRLF and escaping)
+function csvEscape(val){
+if (val == null) return '';
+var s = String(val);
+if (s.indexOf('"') !== -1 || s.indexOf(',') !== -1 || s.indexOf('\n') !== -1 || s.indexOf('\r') !== -1){
+s = '"' + s.replace(/"/g, '""') + '"';
+}
+return s;
+}
+function exportCSV(lines){
+var blob = new Blob([lines.join('\r\n')], {type: 'text/csv;charset=utf-8;'});
+var url = URL.createObjectURL(blob);
+var a = document.createElement('a');
+a.href = url;
+a.download = 'stocks_filtered.csv';
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+function doExport(){
+var lines = [];
+lines.push(['Dept','Warehouse','Supplier Reference','Part Number','Physical Inventory','SubLocation'].join(','));
+for (var i = 0; i < filteredData.length; i++){
+var it = filteredData[i];
+lines.push([
+csvEscape(it.dept),
+csvEscape(it.warehouse),
+csvEscape(it.supplierRef),
+csvEscape(it.part),
+csvEscape(it.qty),
+csvEscape(it.sub)
+].join(','));
+}
+exportCSV(lines);
+}
+
+// Load CSV
 function loadCSVFile(file){
 if (!file) return;
 var reader = new FileReader();
@@ -402,7 +417,7 @@ status.textContent = 'Error reading CSV file';
 reader.readAsText(file);
 }
 
-// Clear data
+// Clear
 clearBtn.addEventListener('click', function(){
 allData = [];
 filteredData = [];
@@ -419,7 +434,7 @@ localStorage.removeItem(THEME_KEY);
 renderTable();
 });
 
-// File input change
+// File input
 fileInput.addEventListener('change', function(e){
 var file = e.target.files && e.target.files[0];
 if (file){
@@ -435,26 +450,12 @@ supplierBox.addEventListener('input', function(){
 renderTable();
 });
 
-// Export CSV (filtered data)
+// Export filtered CSV
 exportBtn.addEventListener('click', function(){
-var lines = [];
-lines.push('Dept,Warehouse,Supplier Reference,Part Number,Physical Inventory,SubLocation');
-for (var i = 0; i < filteredData.length; i++){
-var it = filteredData[i];
-lines.push([it.dept, it.warehouse, it.supplierRef, it.part, it.qty, it.sub].join(','));
-}
-var blob = new Blob([lines.join('\n')], {type: 'text/csv;charset=utf-8;'});
-var url = URL.createObjectURL(blob);
-var a = document.createElement('a');
-a.href = url;
-a.download = 'stocks_filtered.csv';
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-URL.revokeObjectURL(url);
+doExport();
 });
 
-// Accent color and theme persistence
+// Accent color / theme
 function hexToRgba(hex, alpha){
 var r=0,g=0,b=0;
 if (hex.charAt(0) === '#') hex = hex.substring(1);
@@ -487,9 +488,9 @@ localStorage.setItem(THEME_KEY, themeToggle.checked ? 'dark' : 'light');
 themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
-// Init (load data + apply saved prefs)
+// Init
 (function init(){
-// Apply saved accent
+// Accent
 var savedAccent = localStorage.getItem(ACCENT_KEY);
 if (savedAccent) {
 accentColor.value = savedAccent;
@@ -497,7 +498,7 @@ document.documentElement.style.setProperty('--accent', savedAccent);
 document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
 }
 
-// Apply saved theme
+// Theme
 var savedTheme = localStorage.getItem(THEME_KEY);
 if (savedTheme === 'dark'){
 themeToggle.checked = true;
@@ -506,14 +507,13 @@ document.documentElement.setAttribute('data-theme', 'dark');
 themeToggle.checked = false;
 document.documentElement.removeAttribute('data-theme');
 } else {
-// No saved theme: respect system preference (best effort)
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
 themeToggle.checked = true;
 document.documentElement.setAttribute('data-theme', 'dark');
 }
 }
 
-// Load last CSV if available
+// Load last CSV if any
 var last = localStorage.getItem(LAST_DATA_KEY);
 if (last){
 try{
@@ -521,27 +521,26 @@ allData = JSON.parse(last);
 renderTable();
 status.textContent = 'Loaded saved CSV data';
 } catch(e){
-// ignore parse error
+// ignore
 }
 }
 
-// If no data yet, load a small sample dataset for immediate use
+// If no data yet, load sample data for immediate use
 if (!allData || allData.length === 0){
 allData = SAMPLE_DATA.slice();
 renderTable();
 status.textContent = 'Loaded sample data (demo). You can upload a CSV anytime to replace it.';
 }
 
-// Initialize scanner overlay as hidden
+// Scanner overlay hidden by default
 scannerOverlay.style.display = 'none';
 })();
 
-// Scanner logic (click-to-use)
-var videoStream = null;
+// Scanner (click-to-use)
 var detector = null;
 var streamActive = false;
+var videoStream = null;
 var lastDetectedCode = '';
-var lastUsedCode = '';
 
 scanBtn.addEventListener('click', function(){
 if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
@@ -557,12 +556,10 @@ scannerVideo.srcObject = stream;
 scannerVideo.play();
 streamActive = true;
 lastDetectedCode = '';
-lastUsedCode = '';
 useCodeBtn.style.display = 'none';
-// BarcodeDetector path
+// BarcodeDetector path when available
 if ('BarcodeDetector' in window){
 detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','qr_code'] });
-// 9: create a small canvas to pull frames
 var canvas = document.createElement('canvas');
 var ctx = canvas.getContext('2d');
 canvas.width = 640; canvas.height = 480;
@@ -577,11 +574,8 @@ if (barcodes && barcodes.length > 0){
 var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
 if (code){
 lastDetectedCode = code;
-// Show the "Use this code" button for the user to confirm
 useCodeBtn.style.display = 'block';
-// Do not auto-fill to respect user control
 }
-// keep scanning
 }
 requestAnimationFrame(tick);
 })
@@ -592,7 +586,6 @@ requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
 } else {
-// Fallback: no BarcodeDetector
 alert('Barcode scanning is not supported in this browser. You can type a value into the search box.');
 }
 })
@@ -603,7 +596,7 @@ stopScanner();
 });
 });
 
-// Use this code button handler
+// Use this code button
 useCodeBtn.addEventListener('click', function(){
 if (lastDetectedCode){
 searchBox.value = lastDetectedCode;
@@ -617,7 +610,7 @@ scannerClose.addEventListener('click', function(){
 stopScanner();
 });
 
-// Stop scanner: clean up
+// Stop scanner
 function stopScanner(){
 streamActive = false;
 if (videoStream){
@@ -628,7 +621,6 @@ scannerVideo.srcObject = null;
 scannerOverlay.style.display = 'none';
 useCodeBtn.style.display = 'none';
 lastDetectedCode = '';
-// Return to previous UI
 }
 
 // Click outside to close (optional)
@@ -638,15 +630,13 @@ stopScanner();
 }
 });
 
-// Load sample data button
+// Load sample
 loadSampleBtn.addEventListener('click', function(){
 allData = SAMPLE_DATA.slice();
 renderTable();
 status.textContent = 'Loaded sample data (demo). Upload a CSV anytime to replace it.';
 localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
 });
-
-// End of script
 </script>
 
 </body>
