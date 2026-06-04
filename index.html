@@ -25,7 +25,7 @@
 --card: #fff;
 }
 [data-theme="dark"]{
---bg: #0e0f13;
+--bg: #0f1117;
 --panel: #171a1f;
 --text: #eaeaea;
 --muted: #aaa;
@@ -45,7 +45,7 @@ input[type="file"]{font-size:14px}
 input[type="text"]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;width:100%;max-width:340px}
 button{color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
 button.accent{ background: var(--accent); }
-button.fixed{ background: #2e8b57; } /* fixed color for primary actions */
+button.fixed{ background: #2e8b57; } /* fixed color for primary actions on each row */
 button.secondary{ background:#666; }
 
 /* Right-aligned button area (always on the right) */
@@ -67,17 +67,35 @@ button.secondary{ background:#666; }
 .btnGroup { width: 100%; justify-content: flex-end; }
 }
 
-/* Responsive table: better mobile experience */
+/* Responsive, mobile-friendly 6-column results table with clean borders */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table{ width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 700px; }
-th,td{ border:1px solid #ddd; padding:8px 8px; text-align:left; white-space: normal; word-wrap: break-word; }
-th{ background:#f0f0f0; }
+table.resultsTable {
+width: 100%;
+border-collapse: collapse;
+table-layout: fixed;
+}
+table.resultsTable th,
+table.resultsTable td {
+border: 1px solid #ddd;
+padding: 8px;
+text-align: left;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+table.resultsTable thead th { background: #f0f0f0; }
+table.resultsTable th:last-child,
+table.resultsTable td:last-child { border-right: 0; } /* avoid double-right edge with card border */
+/* Remove bottom border on last row for a clean card boundary on borders */
+table.resultsTable tbody tr:last-child td { border-bottom: 0; }
+
 [data-theme="dark"] th { color: #000; } /* readable headers in dark mode */
 .muted{color:var(--muted);font-size:12px}
 #scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
 #scannerBox{width:90%;max-width:600px;background:#111;border-radius:12px;padding:12px;position:relative}
-#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000}
+#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block}
 #scannerClose{position:absolute;top:6px;right:6px;background:#333;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer}
+#useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
 @media (max-width: 700px){
 main{padding:8px}
 .row{flex-direction:column}
@@ -108,7 +126,7 @@ input:focus{ border-color: var(--accent); }
 <div style="flex:1 1 auto; min-width:0;">
 <label for="searchBox" class="label">Search Part Number</label><br/>
 <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1 or TPMT 2-1*" />
-<!-- Keep font size of the line consistent with the label above -->
+<!-- Keep font size of the line consistent with the Part Number label -->
 <div class="orSupplierLine">or Supplier Reference</div>
 <input id="supplierBox" type="text" placeholder="Supplier Reference" />
 </div>
@@ -134,9 +152,11 @@ input:focus{ border-color: var(--accent); }
 </div>
 <div id="status" class="muted" style="margin-top:8px">No data loaded yet. Load a CSV to begin.</div>
 
-<!-- A tiny helper button to load sample data if you want to demo quickly -->
+<!-- Tiny helper: load sample data for quick start (optional) -->
 <div style="margin-top:6px;">
-<button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px;">Load sample demo data</button>
+<button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px; display:inline-block;">
+Load sample demo data
+</button>
 </div>
 </section>
 
@@ -144,7 +164,7 @@ input:focus{ border-color: var(--accent); }
 <h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
 
 <div class="tableWrap">
-<table id="resultsTable" aria-label="stock results">
+<table id="resultsTable" class="resultsTable" aria-label="stock results">
 <thead>
 <tr>
 <th>Dept</th>
@@ -167,23 +187,26 @@ input:focus{ border-color: var(--accent); }
 
 <!-- Barcode scanner overlay (hidden by default) -->
 <div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
-<div id="scannerBox">
-<button id="scannerClose">Close</button>
+<div id="scannerBox" style="position:relative;">
+<button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
 <video id="scannerVideo" autoplay playsinline></video>
+<button id="useCodeBtn" title="Use detected code" class="accent" style="display:none;">Use this code</button>
 </div>
 </div>
 
 <script>
-// Sample data for quick demo (to be replaced by a real CSV)
+// Demo data (auto-load on first run if no CSV uploaded)
 var SAMPLE_DATA = [
 { dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
 { dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
 { dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
 ];
 
+// Data holders
 var allData = [];
 var filteredData = [];
 
+// UI elements
 var fileInput = document.getElementById('fileInput');
 var searchBox = document.getElementById('searchBox');
 var supplierBox = document.getElementById('supplierBox');
@@ -201,10 +224,23 @@ var themeStatus = document.getElementById('themeStatus');
 var scannerOverlay = document.getElementById('scannerOverlay');
 var scannerVideo = document.getElementById('scannerVideo');
 var scannerClose = document.getElementById('scannerClose');
+var useCodeBtn = document.getElementById('useCodeBtn');
 var loadSampleBtn = document.getElementById('loadSampleBtn');
-var loadSampleBtnDeprecatedNote = ''; // placeholder if you want
 
-var AX_SYNC_URL = ''; // Optional: set your AX endpoint here
+// Local storage keys
+var ACCENT_KEY = 'sl_accent';
+var THEME_KEY = 'sl_theme';
+var LAST_DATA_KEY = 'sl_lastData';
+
+// Barcode/Camera helpers
+var videoStream = null;
+var detector = null;
+var streamActive = false;
+var lastDetectedCode = '';
+var lastUsedCode = '';
+
+var AX_SYNC_URL = ''; // optional endpoint (not used in this drop)
+
 
 // Helpers
 function escapeHtml(text){
@@ -217,7 +253,7 @@ return String(text)
 .replace(/'/g, '&#39;');
 }
 
-// Robust 6-column CSV parsing (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)
+// CSV parsing (robust, 6-column: Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)
 function parseCSVLine(line){
 var res = [];
 var cur = '';
@@ -253,7 +289,7 @@ for (var j = 0; j < headers.length; j++){
 lower.push((headers[j] || '').toString().toLowerCase().trim());
 }
 
-// Detect indexes for: Dept, Warehouse, Supplier Reference, Part, Physical Inventory, SubLocation
+// indexes
 var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
 for (var k = 0; k < lower.length; k++){
 var h = lower[k];
@@ -264,14 +300,13 @@ if (iP === -1 && h.indexOf('part') !== -1) iP = k;
 if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
 if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
 }
-
-// Fallbacks if header naming is slightly different
-if (iDept === -1){ for (var t=0; t<lower.length; t++){ if (lower[t].indexOf('dept') !== -1 || lower[t].indexOf('department') !== -1) { iDept = t; break; } } }
-if (iW === -1){ for (var t2=0; t2<lower.length; t2++){ if (lower[t2].indexOf('warehouse') !== -1) { iW = t2; break; } } }
-if (iSR === -1){ for (var t3=0; t3<lower.length; t3++){ if (lower[t3].indexOf('supplier') !== -1 && lower[t3].indexOf('reference') !== -1) { iSR = t3; break; } } }
-if (iP === -1){ for (var t4=0; t4<lower.length; t4++){ if (lower[t4].indexOf('part') !== -1) { iP = t4; break; } } }
-if (iQ === -1){ for (var t5=0; t5<lower.length; t5++){ if (lower[t5].indexOf('inventory') !== -1 || lower[t5].indexOf('qty') !== -1) { iQ = t5; break; } } }
-if (iS === -1){ for (var t6=0; t6<lower.length; t6++){ if (lower[t6].indexOf('sub') !== -1 || lower[t6].indexOf('sublocation') !== -1) { iS = t6; break; } } }
+// fallbacks
+if (iDept === -1) for (var t=0; t<lower.length; t++){ if (lower[t].indexOf('dept') !== -1 || lower[t].indexOf('department') !== -1) { iDept = t; break; } }
+if (iW === -1) for (var t2=0; t2<lower.length; t2++){ if (lower[t2].indexOf('warehouse') !== -1) { iW = t2; break; } }
+if (iSR === -1) for (var t3=0; t3<lower.length; t3++){ if (lower[t3].indexOf('supplier') !== -1 && lower[t3].indexOf('reference') !== -1) { iSR = t3; break; } }
+if (iP === -1) for (var t4=0; t4<lower.length; t4++){ if (lower[t4].indexOf('part') !== -1) { iP = t4; break; } }
+if (iQ === -1) for (var t5=0; t5<lower.length; t5++){ if (lower[t5].indexOf('inventory') !== -1 || lower[t5].indexOf('qty') !== -1) { iQ = t5; break; } }
+if (iS === -1) for (var t6=0; t6<lower.length; t6++){ if (lower[t6].indexOf('sub') !== -1 || lower[t6].indexOf('sublocation') !== -1) { iS = t6; break; } }
 
 if (iDept === -1 || iW === -1 || iSR === -1 || iP === -1 || iQ === -1 || iS === -1){
 console.log('CSV header issue. Detected indexes:', {dept:iDept, ware:iW, src:iSR, part:iP, qty:iQ, sub:iS}, 'Headers:', headers);
@@ -303,7 +338,7 @@ var v = (value || '').toString().toLowerCase().trim();
 return v.indexOf(q.toLowerCase()) !== -1;
 }
 
-// Render table based on two searches
+// Render table
 function renderTable(){
 var partQuery = (searchBox.value || '').toString().trim();
 var supplierQuery = (supplierBox.value || '').toString().trim();
@@ -323,7 +358,7 @@ rows.push(row);
 }
 filteredData = rows;
 
-// Build table: Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation
+// Build table
 resultsTableBody.innerHTML = '';
 for (var j = 0; j < rows.length; j++){
 var r = rows[j];
@@ -353,9 +388,7 @@ if (rows.length > 0){
 allData = rows;
 renderTable();
 status.textContent = 'Loaded ' + rows.length + ' records from CSV';
-localStorage.setItem('sl_lastData', JSON.stringify(rows));
-// If user uploaded, save accent / theme defaults too
-localStorage.setItem('sl_accent', accentColor.value);
+localStorage.setItem(LAST_DATA_KEY, JSON.stringify(rows));
 } else {
 status.textContent = 'No valid rows found in CSV';
 allData = [];
@@ -376,14 +409,13 @@ filteredData = [];
 resultsTableBody.innerHTML = '';
 searchBox.value = '';
 supplierBox.value = '';
-// Reset the file input so the user must re-load a CSV after clearing
 fileInput.value = '';
 status.textContent = 'Data cleared';
 summary.textContent = 'Records: 0';
 noResults.style.display = 'none';
-localStorage.removeItem('sl_lastData');
-localStorage.removeItem('sl_last_accent');
-localStorage.removeItem('sl_theme');
+localStorage.removeItem(LAST_DATA_KEY);
+localStorage.removeItem(ACCENT_KEY);
+localStorage.removeItem(THEME_KEY);
 renderTable();
 });
 
@@ -422,7 +454,7 @@ document.body.removeChild(a);
 URL.revokeObjectURL(url);
 });
 
-// Accent color and theme
+// Accent color and theme persistence
 function hexToRgba(hex, alpha){
 var r=0,g=0,b=0;
 if (hex.charAt(0) === '#') hex = hex.substring(1);
@@ -440,9 +472,8 @@ return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 
 accentColor.addEventListener('input', function(){
 document.documentElement.style.setProperty('--accent', accentColor.value);
-// Soft tint background to reflect accent
 document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
-localStorage.setItem('sl_accent', accentColor.value);
+localStorage.setItem(ACCENT_KEY, accentColor.value);
 });
 
 // Theme toggle
@@ -452,14 +483,14 @@ document.documentElement.setAttribute('data-theme', 'dark');
 } else {
 document.documentElement.removeAttribute('data-theme');
 }
-localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+localStorage.setItem(THEME_KEY, themeToggle.checked ? 'dark' : 'light');
 themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
 // Init (load data + apply saved prefs)
 (function init(){
 // Apply saved accent
-var savedAccent = localStorage.getItem('sl_accent');
+var savedAccent = localStorage.getItem(ACCENT_KEY);
 if (savedAccent) {
 accentColor.value = savedAccent;
 document.documentElement.style.setProperty('--accent', savedAccent);
@@ -467,7 +498,7 @@ document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
 }
 
 // Apply saved theme
-var savedTheme = localStorage.getItem('sl_theme');
+var savedTheme = localStorage.getItem(THEME_KEY);
 if (savedTheme === 'dark'){
 themeToggle.checked = true;
 document.documentElement.setAttribute('data-theme', 'dark');
@@ -475,7 +506,7 @@ document.documentElement.setAttribute('data-theme', 'dark');
 themeToggle.checked = false;
 document.documentElement.removeAttribute('data-theme');
 } else {
-// No saved theme: try to respect system preference
+// No saved theme: respect system preference (best effort)
 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
 themeToggle.checked = true;
 document.documentElement.setAttribute('data-theme', 'dark');
@@ -483,7 +514,7 @@ document.documentElement.setAttribute('data-theme', 'dark');
 }
 
 // Load last CSV if available
-var last = localStorage.getItem('sl_lastData');
+var last = localStorage.getItem(LAST_DATA_KEY);
 if (last){
 try{
 allData = JSON.parse(last);
@@ -498,44 +529,43 @@ status.textContent = 'Loaded saved CSV data';
 if (!allData || allData.length === 0){
 allData = SAMPLE_DATA.slice();
 renderTable();
-status.textContent = 'Loaded sample data (no CSV uploaded yet). You can upload a CSV anytime to replace it.';
+status.textContent = 'Loaded sample data (demo). You can upload a CSV anytime to replace it.';
 }
 
 // Initialize scanner overlay as hidden
 scannerOverlay.style.display = 'none';
 })();
 
-// Optional: scanner placeholder (basic BarcodeDetector usage)
-// We implement a simple barcode scanner flow if browser supports BarcodeDetector.
-// It will attempt to read a code from the video frames and fill searchBox.
+// Scanner logic (click-to-use)
 var videoStream = null;
 var detector = null;
 var streamActive = false;
+var lastDetectedCode = '';
+var lastUsedCode = '';
 
 scanBtn.addEventListener('click', function(){
-// Check support
 if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
 alert('Camera access is not supported in this browser.');
 return;
 }
 
-// Show overlay
 scannerOverlay.style.display = 'flex';
-// Start camera
 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
 .then(function(stream){
 videoStream = stream;
 scannerVideo.srcObject = stream;
 scannerVideo.play();
 streamActive = true;
-
+lastDetectedCode = '';
+lastUsedCode = '';
+useCodeBtn.style.display = 'none';
+// BarcodeDetector path
 if ('BarcodeDetector' in window){
 detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','qr_code'] });
-// Prepare canvas to pull frames
+// 9: create a small canvas to pull frames
 var canvas = document.createElement('canvas');
 var ctx = canvas.getContext('2d');
-canvas.width = 640;
-canvas.height = 480;
+canvas.width = 640; canvas.height = 480;
 
 function tick(){
 if (!streamActive) return;
@@ -544,13 +574,14 @@ ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
 detector.detect(canvas)
 .then(barcodes => {
 if (barcodes && barcodes.length > 0){
-var code = barcodes[0].rawValue || barcodes[0].displayValue;
+var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
 if (code){
-searchBox.value = code;
-renderTable();
-stopScanner();
-return;
+lastDetectedCode = code;
+// Show the "Use this code" button for the user to confirm
+useCodeBtn.style.display = 'block';
+// Do not auto-fill to respect user control
 }
+// keep scanning
 }
 requestAnimationFrame(tick);
 })
@@ -561,43 +592,58 @@ requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
 } else {
-// BarcodeDetector not supported: user can type manually or use QR workaround
-alert('Barcode scanning not supported in this browser. You can still type a value into the search box.');
+// Fallback: no BarcodeDetector
+alert('Barcode scanning is not supported in this browser. You can type a value into the search box.');
 }
 })
 .catch(function(err){
 console.error(err);
 alert('Unable to access camera. Please allow camera permissions.');
+stopScanner();
 });
 });
 
+// Use this code button handler
+useCodeBtn.addEventListener('click', function(){
+if (lastDetectedCode){
+searchBox.value = lastDetectedCode;
+renderTable();
+stopScanner();
+}
+});
+
+// Close scanner
+scannerClose.addEventListener('click', function(){
+stopScanner();
+});
+
+// Stop scanner: clean up
 function stopScanner(){
 streamActive = false;
 if (videoStream){
 videoStream.getTracks().forEach(function(t){ t.stop(); });
 }
+videoStream = null;
 scannerVideo.srcObject = null;
 scannerOverlay.style.display = 'none';
+useCodeBtn.style.display = 'none';
+lastDetectedCode = '';
+// Return to previous UI
 }
 
-// Close scanner button
-scannerClose.addEventListener('click', function(){
-stopScanner();
-});
-
-// Simple cleanup if user closes overlay by clicking outside (optional)
+// Click outside to close (optional)
 scannerOverlay.addEventListener('click', function(e){
 if (e.target === scannerOverlay){
 stopScanner();
 }
 });
 
-// Load sample data button (for quick demo)
+// Load sample data button
 loadSampleBtn.addEventListener('click', function(){
 allData = SAMPLE_DATA.slice();
 renderTable();
-status.textContent = 'Loaded sample data (demo). Upload a CSV to replace it.';
-localStorage.setItem('sl_lastData', JSON.stringify(allData));
+status.textContent = 'Loaded sample data (demo). Upload a CSV anytime to replace it.';
+localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
 });
 
 // End of script
