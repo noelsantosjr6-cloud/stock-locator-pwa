@@ -11,6 +11,7 @@
 <!-- iOS meta for home screen experience -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
 <!-- Optional: provide an iOS home-screen icon if you add real icons -->
 <!-- <link rel="apple-touch-icon" href="icons/apple-touch-icon.png"> -->
 
@@ -65,9 +66,12 @@ button.secondary{ background:#666; }
 .leftCol { order: 0; }
 .btnGroup { width: 100%; justify-content: flex-end; }
 }
-table{width:100%;border-collapse:collapse;margin-top:8px}
-th,td{border:1px solid #ddd;padding:8px 8px 8px 8px;text-align:left}
-th{background:#f0f0f0}
+
+/* Responsive table: better mobile experience */
+.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table{ width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 700px; }
+th,td{ border:1px solid #ddd; padding:8px 8px; text-align:left; white-space: normal; word-wrap: break-word; }
+th{ background:#f0f0f0; }
 [data-theme="dark"] th { color: #000; } /* readable headers in dark mode */
 .muted{color:var(--muted);font-size:12px}
 #scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
@@ -129,10 +133,17 @@ input:focus{ border-color: var(--accent); }
 <span id="themeStatus" class="muted" style="margin-left:8px"></span>
 </div>
 <div id="status" class="muted" style="margin-top:8px">No data loaded yet. Load a CSV to begin.</div>
+
+<!-- A tiny helper button to load sample data if you want to demo quickly -->
+<div style="margin-top:6px;">
+<button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px;">Load sample demo data</button>
+</div>
 </section>
 
 <section class="card" aria-label="results">
 <h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
+
+<div class="tableWrap">
 <table id="resultsTable" aria-label="stock results">
 <thead>
 <tr>
@@ -146,6 +157,8 @@ input:focus{ border-color: var(--accent); }
 </thead>
 <tbody><!-- rows injected here --></tbody>
 </table>
+</div>
+
 <div id="noResults" class="muted" style="display:none;margin-top:6px">No results match your search.</div>
 <div id="summary" class="muted" style="margin-top:6px"></div>
 <div id="debug" class="muted" style="margin-top:6px; display:none"></div>
@@ -161,7 +174,13 @@ input:focus{ border-color: var(--accent); }
 </div>
 
 <script>
-// ES5-compatible JS
+// Sample data for quick demo (to be replaced by a real CSV)
+var SAMPLE_DATA = [
+{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
+{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
+{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
+];
+
 var allData = [];
 var filteredData = [];
 
@@ -182,6 +201,9 @@ var themeStatus = document.getElementById('themeStatus');
 var scannerOverlay = document.getElementById('scannerOverlay');
 var scannerVideo = document.getElementById('scannerVideo');
 var scannerClose = document.getElementById('scannerClose');
+var loadSampleBtn = document.getElementById('loadSampleBtn');
+var loadSampleBtnDeprecatedNote = ''; // placeholder if you want
+
 var AX_SYNC_URL = ''; // Optional: set your AX endpoint here
 
 // Helpers
@@ -332,6 +354,8 @@ allData = rows;
 renderTable();
 status.textContent = 'Loaded ' + rows.length + ' records from CSV';
 localStorage.setItem('sl_lastData', JSON.stringify(rows));
+// If user uploaded, save accent / theme defaults too
+localStorage.setItem('sl_accent', accentColor.value);
 } else {
 status.textContent = 'No valid rows found in CSV';
 allData = [];
@@ -418,6 +442,7 @@ accentColor.addEventListener('input', function(){
 document.documentElement.style.setProperty('--accent', accentColor.value);
 // Soft tint background to reflect accent
 document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
+localStorage.setItem('sl_accent', accentColor.value);
 });
 
 // Theme toggle
@@ -428,56 +453,154 @@ document.documentElement.setAttribute('data-theme', 'dark');
 document.documentElement.removeAttribute('data-theme');
 }
 localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
-// Init
+// Init (load data + apply saved prefs)
 (function init(){
+// Apply saved accent
+var savedAccent = localStorage.getItem('sl_accent');
+if (savedAccent) {
+accentColor.value = savedAccent;
+document.documentElement.style.setProperty('--accent', savedAccent);
+document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
+}
+
+// Apply saved theme
+var savedTheme = localStorage.getItem('sl_theme');
+if (savedTheme === 'dark'){
+themeToggle.checked = true;
+document.documentElement.setAttribute('data-theme', 'dark');
+} else if (savedTheme === 'light'){
+themeToggle.checked = false;
+document.documentElement.removeAttribute('data-theme');
+} else {
+// No saved theme: try to respect system preference
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+themeToggle.checked = true;
+document.documentElement.setAttribute('data-theme', 'dark');
+}
+}
+
+// Load last CSV if available
 var last = localStorage.getItem('sl_lastData');
 if (last){
 try{
 allData = JSON.parse(last);
 renderTable();
+status.textContent = 'Loaded saved CSV data';
 } catch(e){
-// ignore
+// ignore parse error
 }
 }
-// Apply initial accent tint
-document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
-// Load theme if saved
-var savedTheme = localStorage.getItem('sl_theme');
-if (savedTheme === 'dark'){
-themeToggle.checked = true;
-document.documentElement.setAttribute('data-theme', 'dark');
+
+// If no data yet, load a small sample dataset for immediate use
+if (!allData || allData.length === 0){
+allData = SAMPLE_DATA.slice();
+renderTable();
+status.textContent = 'Loaded sample data (no CSV uploaded yet). You can upload a CSV anytime to replace it.';
 }
+
+// Initialize scanner overlay as hidden
+scannerOverlay.style.display = 'none';
 })();
 
-// Optional: scanner placeholder (not implemented here)
-scannerOverlay.style.display = 'none';
+// Optional: scanner placeholder (basic BarcodeDetector usage)
+// We implement a simple barcode scanner flow if browser supports BarcodeDetector.
+// It will attempt to read a code from the video frames and fill searchBox.
+var videoStream = null;
+var detector = null;
+var streamActive = false;
 
-// Service Worker registration (PWA)
-if ('serviceWorker' in navigator) {
-window.addEventListener('load', function () {
-// If you're hosting under a subpath (e.g., /repo/), adjust the path below:
-// var swPath = '/yourrepo/service-worker.js';
-var swPath = 'service-worker.js';
-navigator.serviceWorker.register(swPath)
-.then(function (reg) {
-// Registration successful
-console.log('Service Worker registered with scope:', reg.scope);
-})
-.catch(function (err) {
-console.log('Service Worker registration failed:', err);
-});
-});
+scanBtn.addEventListener('click', function(){
+// Check support
+if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
+alert('Camera access is not supported in this browser.');
+return;
 }
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(function(reg) { console.log('Service Worker registered!', reg); })
-        .catch(function(err) { console.log('Registration failed: ', err); });
-    });
-  }
+
+// Show overlay
+scannerOverlay.style.display = 'flex';
+// Start camera
+navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+.then(function(stream){
+videoStream = stream;
+scannerVideo.srcObject = stream;
+scannerVideo.play();
+streamActive = true;
+
+if ('BarcodeDetector' in window){
+detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','qr_code'] });
+// Prepare canvas to pull frames
+var canvas = document.createElement('canvas');
+var ctx = canvas.getContext('2d');
+canvas.width = 640;
+canvas.height = 480;
+
+function tick(){
+if (!streamActive) return;
+try{
+ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
+detector.detect(canvas)
+.then(barcodes => {
+if (barcodes && barcodes.length > 0){
+var code = barcodes[0].rawValue || barcodes[0].displayValue;
+if (code){
+searchBox.value = code;
+renderTable();
+stopScanner();
+return;
+}
+}
+requestAnimationFrame(tick);
+})
+.catch(function(){ requestAnimationFrame(tick); });
+} catch(err){
+requestAnimationFrame(tick);
+}
+}
+requestAnimationFrame(tick);
+} else {
+// BarcodeDetector not supported: user can type manually or use QR workaround
+alert('Barcode scanning not supported in this browser. You can still type a value into the search box.');
+}
+})
+.catch(function(err){
+console.error(err);
+alert('Unable to access camera. Please allow camera permissions.');
+});
+});
+
+function stopScanner(){
+streamActive = false;
+if (videoStream){
+videoStream.getTracks().forEach(function(t){ t.stop(); });
+}
+scannerVideo.srcObject = null;
+scannerOverlay.style.display = 'none';
+}
+
+// Close scanner button
+scannerClose.addEventListener('click', function(){
+stopScanner();
+});
+
+// Simple cleanup if user closes overlay by clicking outside (optional)
+scannerOverlay.addEventListener('click', function(e){
+if (e.target === scannerOverlay){
+stopScanner();
+}
+});
+
+// Load sample data button (for quick demo)
+loadSampleBtn.addEventListener('click', function(){
+allData = SAMPLE_DATA.slice();
+renderTable();
+status.textContent = 'Loaded sample data (demo). Upload a CSV to replace it.';
+localStorage.setItem('sl_lastData', JSON.stringify(allData));
+});
+
+// End of script
 </script>
 
 </body>
