@@ -539,10 +539,13 @@ scanBtn.addEventListener('click', function(){
     });
 });
 
-// Appends scanned data into the supplierBox input 
+// Appends scanned data into the supplierBox input and strips leading zeros
 useCodeBtn.addEventListener('click', function(){
   if (typeof lastDetectedCode === 'string' && lastDetectedCode.length > 0){
-    supplierBox.value = lastDetectedCode;
+    // Remove leading zeros from the barcode string
+    var cleanCode = lastDetectedCode.replace(/^0+/, ''); 
+    
+    supplierBox.value = cleanCode;
     renderTable();
     stopScanner();
   }
