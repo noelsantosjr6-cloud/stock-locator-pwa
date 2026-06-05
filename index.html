@@ -30,7 +30,6 @@ main{ padding:14px }
 .card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
 .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
 label{ font-weight:600 }
-input[type="file"]{ font-size:14px; width: 100%; }
 input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:100%; max-width:340px }
 button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight: 600; }
 button.fixed{ background:#2e8b57; }
@@ -134,27 +133,23 @@ input:focus{ border-color: var(--accent); }
 <main>
 <section class="card" aria-label="data controls">
 <div class="row" style="gap:12px; align-items:flex-start;">
- <div style="min-width:0; width: 100%;">
- <label for="fileInput" class="muted" style="font-weight:600">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
- <input id="fileInput" type="file" accept=".csv" />
- </div>
  
- <div style="flex:1 1 auto; min-width:0;">
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
  <label for="searchBox" class="muted" style="font-weight:600">Search Part Number</label><br/>
  <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1" />
  </div>
  
- <div style="flex:1 1 auto; min-width:0;">
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
  <label for="supplierBox" class="muted" style="font-weight:600">Search Supplier Reference</label><br/>
  <input id="supplierBox" type="text" placeholder="Supplier Reference" />
  </div>
 
- <div class="centerActions" aria-label="scan action" style="align-self:center">
- <button id="scanBtn" class="fixed" title="Scan barcode using camera">Scan Barcode</button>
+ <div class="centerActions" aria-label="scan action" style="align-self:center; margin-top:4px;">
+ <button id="scanBtn" class="fixed" title="Scan barcode using camera" style="width:100%; max-width:340px; padding:12px;">Scan Barcode</button>
  </div>
 </div>
 
-<div class="row" style="gap:12px;align-items:center;margin-top:6px">
+<div class="row" style="gap:12px;align-items:center;margin-top:12px;border-top:1px dashed #eee;padding-top:12px;">
  <label for="accentColor" style="font-weight:600" title="Accent color (theme color)">Accent color</label>
  <input id="accentColor" type="color" value="#2e8b57" />
  <label for="themeToggle" style="margin-left:8px;">Dark mode</label>
@@ -164,11 +159,6 @@ input:focus{ border-color: var(--accent); }
 
 <div id="status" class="muted" style="margin-top:8px">Loading stocks.csv from host...</div>
 
-<div style="margin-top:6px;">
- <button id="LoadDemoBtn" class="secondary" style="display:none; background:#777; padding:8px 12px; border-radius:6px;">
- Load demo data
- </button>
-</div>
 </section>
 
 <section class="card" aria-label="results">
@@ -219,7 +209,6 @@ var allData = [];
 var filteredData = [];
 
 // DOM Element Registry
-var fileInput = document.getElementById('fileInput');
 var searchBox = document.getElementById('searchBox');
 var supplierBox = document.getElementById('supplierBox');
 var resultsTableBody = document.querySelector('#resultsTable tbody');
@@ -227,7 +216,6 @@ var status = document.getElementById('status');
 var summary = document.getElementById('summary');
 var clearBtn = document.getElementById('clearBtn');
 var scanBtn = document.getElementById('scanBtn');
-var LoadDemoBtn = document.getElementById('LoadDemoBtn');
 var accentColor = document.getElementById('accentColor');
 var themeToggle = document.getElementById('themeToggle');
 var themeStatus = document.getElementById('themeStatus');
@@ -370,39 +358,12 @@ function debounceSearch() {
 searchBox.addEventListener('input', debounceSearch);
 supplierBox.addEventListener('input', debounceSearch);
 
-function loadCSVFile(file){
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e){
-    var text = e.target.result;
-    var rows = parseCSV(text);
-    if (rows.length > 0){
-      allData = rows;
-      renderTable();
-      status.textContent = 'Loaded ' + rows.length + ' records from CSV';
-      localStorage.setItem(LAST_DATA_KEY, JSON.stringify(rows));
-      localStorage.setItem(USER_OVERRIDE_KEY, 'true');
-      localStorage.setItem(STORAGE_VERSION_KEY, APP_DATA_VERSION);
-    } else {
-      status.textContent = 'No valid rows found in CSV';
-      allData = [];
-      renderTable();
-    }
-  };
-  reader.readAsText(file);
-}
-
 clearBtn.addEventListener('click', function(){
   allData = [];
   localStorage.removeItem(LAST_DATA_KEY);
   localStorage.removeItem(USER_OVERRIDE_KEY);
   renderTable();
   status.textContent = 'Data cleared';
-});
-
-fileInput.addEventListener('change', function(e){
-  var file = e.target.files && e.target.files[0];
-  if (file) loadCSVFile(file);
 });
 
 function hexToRgba(hex, alpha){
@@ -481,7 +442,7 @@ themeToggle.addEventListener('change', function(){
   scannerOverlay.style.display = 'none';
 })();
 
-/* Scanner Configuration: Redirected to Supplier Box */
+/* Scanner Configuration */
 var detector;
 var streamActive = false;
 var videoStream = null;
@@ -539,10 +500,11 @@ scanBtn.addEventListener('click', function(){
     });
 });
 
-// Appends scanned data into the supplierBox input 
+// Appends scanned data into the supplierBox input and strips leading zeros
 useCodeBtn.addEventListener('click', function(){
   if (typeof lastDetectedCode === 'string' && lastDetectedCode.length > 0){
-    supplierBox.value = lastDetectedCode;
+    var cleanCode = lastDetectedCode.replace(/^0+/, ''); 
+    supplierBox.value = cleanCode;
     renderTable();
     stopScanner();
   }
