@@ -51,6 +51,9 @@ mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3p
 /* Centered Core Actions Area */
 .centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
 
+/* Layout container for status and live timestamp info row */
+.statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
+
 /* Desktop-default Table Styling */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
@@ -175,7 +178,10 @@ input:focus{ border-color: var(--accent); }
  <span id="themeStatus" class="muted" style="margin-left:8px"></span>
 </div>
 
-<div id="status" class="muted" style="margin-top:8px">Loading stocks.csv from host...</div>
+<div class="statusContainer">
+  <div id="status" class="muted">Loading stocks.csv from host...</div>
+  <div id="timestampDisplay" class="muted" style="font-weight: 600;">Live Sync: --/--/-- --:--</div>
+</div>
 
 </section>
 
@@ -215,6 +221,7 @@ input:focus{ border-color: var(--accent); }
 /* Public URL configuration with live cache-busting timestamp tag */
 const REMOTE_CSV_URL = 'https://raw.githubusercontent.com/noelsantosjr6-cloud/stock-locator-pwa/refs/heads/main/stocks.csv?v=' + new Date().getTime();
 const LAST_DATA_KEY = 'sl_lastData';
+const LAST_TIME_KEY = 'sl_lastTime';
 
 // Data arrays
 var allData = [];
@@ -225,6 +232,7 @@ var searchBox = document.getElementById('searchBox');
 var supplierBox = document.getElementById('supplierBox');
 var resultsTableBody = document.querySelector('#resultsTable tbody');
 var status = document.getElementById('status');
+var timestampDisplay = document.getElementById('timestampDisplay');
 var summary = document.getElementById('summary');
 var clearBtn = document.getElementById('clearBtn');
 var scanBtn = document.getElementById('scanBtn');
@@ -406,6 +414,7 @@ clearBtn.addEventListener('click', function(){
   if(confirm("Clear application cache and force-reload fresh data from GitHub?")){
     allData = [];
     localStorage.removeItem(LAST_DATA_KEY);
+    localStorage.removeItem(LAST_TIME_KEY);
     renderTable();
     status.textContent = 'Data cleared';
     location.reload();
@@ -443,6 +452,21 @@ themeToggle.addEventListener('change', function(){
   themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
+// Helper function to format system dates smoothly
+function getFormattedDate() {
+  var now = new Date();
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var month = months[now.getMonth()];
+  var day = now.getDate();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // Handle midnight
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+  return month + ' ' + day + ', ' + hours + ':' + minutes + ' ' + ampm;
+}
+
 // Self-updating runtime script engine
 (function init(){
   var savedAccent = localStorage.getItem('sl_accent');
@@ -476,15 +500,21 @@ themeToggle.addEventListener('change', function(){
       if (rows.length > 0) {
         allData = rows;
         renderTable();
-        status.textContent = 'Inventory up to date (Live)';
+        status.textContent = 'Inventory up to date';
+        
+        // Generate live operational synchronization timestamp
+        var timestampStr = "Live Sync: " + getFormattedDate();
+        timestampDisplay.textContent = timestampStr;
+        
         localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+        localStorage.setItem(LAST_TIME_KEY, timestampStr);
       } else {
-        status.textContent = 'Error reading live file. Loading backup...';
+        status.textContent = 'Error reading file. Loading backup...';
         loadBackupData();
       }
     })
     .catch(function(){
-      status.textContent = 'Offline Mode. Loading saved backup...';
+      status.textContent = 'Offline Mode. Loading backup...';
       loadBackupData();
     });
 
@@ -493,10 +523,15 @@ themeToggle.addEventListener('change', function(){
 
 function loadBackupData() {
   var last = localStorage.getItem(LAST_DATA_KEY);
+  var lastTime = localStorage.getItem(LAST_TIME_KEY);
   if (last){ 
     try { 
       allData = JSON.parse(last); 
       renderTable();
+      if(lastTime) {
+        // Mark clearly that it's running off old cached sync records
+        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
+      }
     } catch(e) { 
       allData = []; 
     } 
