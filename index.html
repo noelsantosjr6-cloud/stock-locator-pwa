@@ -24,7 +24,8 @@
 *{box-sizing:border-box}
 html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-header{ padding:12px 14px; background: var(--panel); border-bottom:1px solid var(--accent); display:flex; gap:12px; align-items:center }
+header{ padding:12px 14px; background: var(--panel); border-bottom:1px solid var(--accent); display:flex; gap:10px; align-items:center }
+header img.app-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
 header strong{ font-size:16px }
 main{ padding:14px }
 .card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
@@ -34,9 +35,10 @@ input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; 
 button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight: 600; }
 button.fixed{ background:#2e8b57; }
 button.secondary{ background:#666; }
+button.danger{ background:#b22222; }
 
 /* Centered Scan button (single action) */
-.centerActions { width:100%; display:flex; justify-content:center; padding:6px 0; }
+.centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
 
 /* Desktop-default Table Styling */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -128,9 +130,10 @@ input:focus{ border-color: var(--accent); }
 <body>
 
 <header>
+<img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
 <strong>Stock Locator</strong>
 <div class="muted" style="margin-left:auto; padding-right:8px"></div>
-<button id="clearBtn" class="secondary" title="Clear loaded data" style="margin-left:8px">Clear data</button>
+<button id="clearBtn" class="danger" title="Clear cached data" style="margin-left:8px; padding: 8px 12px; font-size:13px;">Clear App Cache</button>
 </header>
 
 <main>
@@ -147,8 +150,9 @@ input:focus{ border-color: var(--accent); }
  <input id="supplierBox" type="text" placeholder="Supplier Reference" />
  </div>
 
- <div class="centerActions" aria-label="scan action" style="align-self:center; margin-top:4px;">
+ <div class="centerActions" aria-label="scan action">
  <button id="scanBtn" class="fixed" title="Scan barcode using camera" style="width:100%; max-width:340px; padding:12px;">Scan Barcode</button>
+ <button id="resetSearchBtn" class="secondary" title="Reset all typed searches" style="width:100%; max-width:340px; padding:10px; background:#444;">Reset Search Fields</button>
  </div>
 </div>
 
@@ -219,6 +223,7 @@ var status = document.getElementById('status');
 var summary = document.getElementById('summary');
 var clearBtn = document.getElementById('clearBtn');
 var scanBtn = document.getElementById('scanBtn');
+var resetSearchBtn = document.getElementById('resetSearchBtn');
 var accentColor = document.getElementById('accentColor');
 var themeToggle = document.getElementById('themeToggle');
 var themeStatus = document.getElementById('themeStatus');
@@ -361,12 +366,22 @@ function debounceSearch() {
 searchBox.addEventListener('input', debounceSearch);
 supplierBox.addEventListener('input', debounceSearch);
 
-clearBtn.addEventListener('click', function(){
-  allData = [];
-  localStorage.removeItem(LAST_DATA_KEY);
-  localStorage.removeItem(USER_OVERRIDE_KEY);
+// Instantly resets both search input bars
+resetSearchBtn.addEventListener('click', function(){
+  searchBox.value = '';
+  supplierBox.value = '';
   renderTable();
-  status.textContent = 'Data cleared';
+});
+
+clearBtn.addEventListener('click', function(){
+  if(confirm("Clear application cache and reload default remote dataset?")){
+    allData = [];
+    localStorage.removeItem(LAST_DATA_KEY);
+    localStorage.removeItem(USER_OVERRIDE_KEY);
+    renderTable();
+    status.textContent = 'Data cleared';
+    location.reload();
+  }
 });
 
 function hexToRgba(hex, alpha){
