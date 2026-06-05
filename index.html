@@ -7,58 +7,45 @@
 
 <style>
 :root{
---bg: #f5f5f5;
---panel: #fff;
---text: #333;
---muted: #666;
---accent: #2e8b57;
---card: #fff;
+  --bg: #f5f5f5;
+  --panel: #fff;
+  --text: #333;
+  --muted: #666;
+  --accent: #2e8b57;
+  --card: #fff;
 }
 [data-theme="dark"]{
---bg: #0f1117;
---panel: #171a1f;
---text: #eaeaea;
---muted: #aaa;
---accent: #4ecdc4;
---card: #1e1f24;
+  --bg: #0f1117;
+  --panel: #171a1f;
+  --text: #eaeaea;
+  --muted: #aaa;
+  --accent: #4ecdc4;
+  --card: #1e1f24;
 }
 *{box-sizing:border-box}
 html, body { height: 100%; }
-body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 header{ padding:12px 14px; background: var(--panel); border-bottom:1px solid var(--accent); display:flex; gap:12px; align-items:center }
 header strong{ font-size:16px }
 main{ padding:14px }
 .card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
 .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
 label{ font-weight:600 }
-input[type="file"]{ font-size:14px }
+input[type="file"]{ font-size:14px; width: 100%; }
 input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:100%; max-width:340px }
-button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer }
+button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight: 600; }
 button.fixed{ background:#2e8b57; }
 button.secondary{ background:#666; }
 
 /* Centered Scan button (single action) */
 .centerActions { width:100%; display:flex; justify-content:center; padding:6px 0; }
 
-/* 6-column table: horizontal scroll, fixed column widths */
+/* Desktop-default Table Styling */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table.resultsTable {
-width: 900px; min-width: 900px;
-border-collapse: collapse;
-table-layout: fixed;
-}
-table.resultsTable th,
-table.resultsTable td {
-border: 1px solid #ddd;
-padding: 8px;
-text-align: left;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-width: 150px;
-}
+table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
+table.resultsTable th, table.resultsTable td { border: 1px solid #ddd; padding: 10px 8px; text-align: left; }
 table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
-
+[data-theme="dark"] th { color: #000; }
 .muted{ color: var(--muted); font-size:12px; }
 
 /* Barcode scanner overlay */
@@ -68,9 +55,71 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 #scannerClose{ position:absolute; top:6px; right:6px; background:#333; color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer }
 #useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
 
+/* MOBILE RESPONSIVE BLOCKS */
 @media (max-width: 700px){
-main{ padding:8px }
+  main{ padding:8px }
+  input[type="text"]{ max-width: 100%; }
+  
+  /* Force the table to stop acting like a table layout on mobile */
+  table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
+    display: block; 
+  }
+  
+  /* Hide table headers completely on mobile */
+  table.resultsTable thead tr { position: absolute; top: -9999px; left: -9999px; }
+  
+  /* Turn each row into an independent card */
+  table.resultsTable tr {
+    background: var(--card);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  /* Style each cell like a labeled data row */
+  table.resultsTable td {
+    border: none;
+    padding: 6px 4px;
+    position: relative;
+    padding-left: 45%;
+    white-space: normal; /* Let long text wrap natively! */
+    text-overflow: clip;
+    overflow: visible;
+    font-size: 14px;
+  }
+  
+  /* Dynamically insert the column names using CSS data-labels */
+  table.resultsTable td:before {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 40%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: bold;
+    color: var(--muted);
+  }
+  
+  /* Label assignments */
+  table.resultsTable td:nth-of-type(1):before { content: "Dept:"; }
+  table.resultsTable td:nth-of-type(2):before { content: "Warehouse:"; }
+  table.resultsTable td:nth-of-type(3):before { content: "Supplier Ref:"; }
+  table.resultsTable td:nth-of-type(4):before { content: "Part Number:"; }
+  table.resultsTable td:nth-of-type(5):before { content: "Inventory:"; }
+  table.resultsTable td:nth-of-type(6):before { content: "SubLocation:"; }
+  
+  /* Make the Part Number field visually pop out */
+  table.resultsTable td:nth-of-type(4) {
+    font-weight: bold;
+    font-size: 15px;
+    border-bottom: 1px dashed #eee;
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+  }
 }
+
 input:focus, button:focus{ outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25); }
 input:focus{ border-color: var(--accent); }
 </style>
