@@ -71,21 +71,24 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     background: var(--card);
     border: 1px solid #ccc;
     border-radius: 8px;
-    margin-bottom: 10px;
-    padding: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   
-  /* Style each cell like a labeled data row */
+  /* Style each cell like a labeled data row with structural alignment fixes */
   table.resultsTable td {
     border: none;
     padding: 6px 4px;
     position: relative;
-    padding-left: 45%;
+    padding-left: 42%;
     white-space: normal; 
     text-overflow: clip;
     overflow: visible;
     font-size: 14px;
+    min-height: 1.8em; /* Prevents empty database fields from collapsing layout lines */
+    display: block;
+    text-align: left;
   }
   
   /* Dynamically insert the column names using CSS data-labels */
@@ -93,7 +96,7 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     position: absolute;
     top: 6px;
     left: 6px;
-    width: 40%;
+    width: 38%;
     padding-right: 10px;
     white-space: nowrap;
     font-weight: bold;
