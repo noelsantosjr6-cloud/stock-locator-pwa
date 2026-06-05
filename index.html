@@ -3,12 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Stock Locator - PWA Enhanced (remote-default preload, 6-column table)</title>
-
-<link rel="manifest" href="manifest.json">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Stock Locator - Remote preload (mobile-friendly, 6-column)</title>
 
 <style>
 :root{
@@ -30,38 +25,25 @@
 *{box-sizing:border-box}
 html, body { height: 100%; }
 body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-header{padding:12px 14px;background: var(--panel);border-bottom:1px solid var(--accent);display:flex;gap:12px;align-items:center}
-header strong{font-size:16px}
-main{padding:14px}
-.card{background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-label{font-weight:600}
-input[type="file"]{font-size:14px}
-input[type="text"]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;width:100%;max-width:340px}
-button{color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
-button.accent{ background: var(--accent); }
-button.fixed{ background: #2e8b57; }
+header{ padding:12px 14px; background: var(--panel); border-bottom:1px solid var(--accent); display:flex; gap:12px; align-items:center }
+header strong{ font-size:16px }
+main{ padding:14px }
+.card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
+.row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+label{ font-weight:600 }
+input[type="file"]{ font-size:14px }
+input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:100%; max-width:340px }
+button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer }
+button.fixed{ background:#2e8b57; }
 button.secondary{ background:#666; }
 
-/* Centered Scan button (only one action) */
+/* Centered Scan button (single action) */
 .centerActions { width:100%; display:flex; justify-content:center; padding:6px 0; }
 
-/* Search inputs area styling (two fields side-by-side on wide screens) */
-.searchRow { display:flex; gap:12px; align-items:flex-start; width:100%; }
-.leftCol { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
-
-.orSupplierLine { margin:6px 0 0 0; font-weight:600; font-size:14px; color: var(--muted); }
-
-@media (max-width: 700px){
-.searchRow { flex-direction:column; }
-main{ padding:8px }
-}
-
-/* 6-column table: horizontal scroll, no header wrap */
+/* 6-column table: horizontal scroll, fixed column widths */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.resultsTable {
-width: 900px;
-min-width: 900px;
+width: 900px; min-width: 900px;
 border-collapse: collapse;
 table-layout: fixed;
 }
@@ -77,19 +59,19 @@ width: 150px;
 }
 table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 
-[data-theme="dark"] th { color: #000; }
-.muted{ color: var(--muted); font-size:12px}
+.muted{ color: var(--muted); font-size:12px; }
 
-/* Barcode scanner overlay (stable close button) */
-#scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
-#scannerBox{width:90%;max-width:600px;background:#111;border-radius:12px;padding:12px;position:relative}
-#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block}
-#scannerClose{position:absolute;top:6px;right:6px;background:#333;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer}
+/* Barcode scanner overlay */
+#scannerOverlay{ position: fixed; inset:0; background: rgba(0,0,0,.7); display:none; justify-content:center; align-items:center; z-index:9999 }
+#scannerBox{ width:90%; max-width:600px; background:#111; border-radius:12px; padding:12px; position:relative }
+#scannerVideo{ width:100%; height:auto; border-radius:6px; background:#000; display:block }
+#scannerClose{ position:absolute; top:6px; right:6px; background:#333; color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer }
 #useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
+
 @media (max-width: 700px){
-main{padding:8px}
+main{ padding:8px }
 }
-input:focus, button:focus{outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25);}
+input:focus, button:focus{ outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25); }
 input:focus{ border-color: var(--accent); }
 </style>
 </head>
@@ -103,34 +85,31 @@ input:focus{ border-color: var(--accent); }
 
 <main>
 <section class="card" aria-label="data controls">
-<div class="searchRow" style="gap:12px; align-items:flex-start">
-<!-- Left: CSV upload + two search fields -->
-<div class="leftCol" style="min-width:0;">
-<div>
-<label for="fileInput" class="label" style="font-weight:600">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
+<div class="row" style="gap:12px; align-items:flex-start;">
+<!-- CSV override -->
+<div style="min-width:0;">
+<label for="fileInput" class="muted" style="font-weight:600">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
 <input id="fileInput" type="file" accept=".csv" />
 </div>
 
-<div class="searchRow" style="gap:12px; align-items:flex-start; margin-top:6px;">
+<!-- Search fields -->
 <div style="flex:1 1 auto; min-width:0;">
-<label for="searchBox" class="label" style="font-weight:600">Search Part Number</label><br/>
+<label for="searchBox" class="muted" style="font-weight:600">Search Part Number</label><br/>
 <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1" />
 </div>
 <div style="flex:1 1 auto; min-width:0;">
-<label for="supplierBox" class="label" style="font-weight:600">Search Supplier Reference</label><br/>
+<label for="supplierBox" class="muted" style="font-weight:600">Search Supplier Reference</label><br/>
 <input id="supplierBox" type="text" placeholder="Supplier Reference" />
 </div>
-</div>
-</div>
 
-<!-- Centered Scan button -->
+<!-- Scan button -->
 <div class="centerActions" aria-label="scan action" style="align-self:center">
 <button id="scanBtn" class="fixed" title="Scan barcode using camera">Scan Barcode</button>
 </div>
 </div>
 
 <div class="row" style="gap:12px;align-items:center;margin-top:6px">
-<label for="accentColor" title="Accent color (theme color)">Accent color</label>
+<label for="accentColor" style="font-weight:600" title="Accent color (theme color)">Accent color</label>
 <input id="accentColor" type="color" value="#2e8b57" />
 <label for="themeToggle" style="margin-left:8px;">Dark mode</label>
 <input id="themeToggle" type="checkbox" />
@@ -140,8 +119,8 @@ input:focus{ border-color: var(--accent); }
 <div id="status" class="muted" style="margin-top:8px">Loading stocks.csv from host...</div>
 
 <div style="margin-top:6px;">
-<button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px;">
-Load sample demo data
+<button id="LoadDemoBtn" class="secondary" style="display:none; background:#777; padding:8px 12px; border-radius:6px;">
+Load demo data
 </button>
 </div>
 </section>
@@ -180,20 +159,23 @@ Load sample demo data
 </div>
 
 <script>
-/* Remote preload configuration (replace with your host URLs) */
-const REMOTE_CSV_URL = 'https://your-host.example/stocks.csv'; // replace with your actual URL
-const REMOTE_VERSION_URL = 'https://your-host.example/stocks_version.json'; // optional; replace or remove
-const APP_DATA_VERSION = '1.0.2'; // bump this when you publish a new remote stocks.csv
+/* Change these two URLs to your hosting setup */
+// Public URL to stocks.csv on your host (GitHub Pages, Netlify, etc.)
+const REMOTE_CSV_URL = 'https://your-host.example/stocks.csv';
+// Optional version endpoint (not required for this patch)
+const REMOTE_VERSION_URL = ''; // e.g., 'https://your-host.example/stocks_version.json'
+const APP_DATA_VERSION = '1.0.1'; // bump whenever stocks.csv changes on host
 
+// Storage keys
 const STORAGE_VERSION_KEY = 'sl_data_version';
 const LAST_DATA_KEY = 'sl_lastData';
-const USER_OVERRIDE_KEY = 'sl_userOverride'; // set to 'true' when a user uploads their own CSV
+const USER_OVERRIDE_KEY = 'sl_userOverride'; // 'true' when a user uploads their own CSV
 
 // Data
 var allData = [];
 var filteredData = [];
 
-// UI references
+// DOM refs
 var fileInput = document.getElementById('fileInput');
 var searchBox = document.getElementById('searchBox');
 var supplierBox = document.getElementById('supplierBox');
@@ -202,7 +184,7 @@ var status = document.getElementById('status');
 var summary = document.getElementById('summary');
 var clearBtn = document.getElementById('clearBtn');
 var scanBtn = document.getElementById('scanBtn');
-var loadSampleBtn = document.getElementById('loadSampleBtn');
+var LoadDemoBtn = document.getElementById('LoadDemoBtn');
 var accentColor = document.getElementById('accentColor');
 var themeToggle = document.getElementById('themeToggle');
 var themeStatus = document.getElementById('themeStatus');
@@ -222,7 +204,7 @@ return String(text)
 .replace(/'/g, '&#39;');
 }
 
-// CSV helpers (6 columns)
+// CSV parsing (6 columns)
 function parseCSVLine(line){
 var res = [];
 var cur = '';
@@ -293,7 +275,7 @@ rows.push({ dept: dept, warehouse: w, supplierRef: sr, part: p, sub: s, qty: q }
 return rows;
 }
 
-/* Render table with current filters (two search boxes) */
+/* Render: apply two filters and show results (qty > 0) */
 function renderTable(){
 var partQuery = (searchBox ? searchBox.value || '' : '');
 var supplierQuery = (supplierBox ? supplierBox.value || '' : '');
@@ -311,7 +293,6 @@ if (supplierQuery.length > 0) suppOK = (row.supplierRef || '').toLowerCase().inc
 
 if (partOK && suppOK) rows.push(row);
 }
-filteredData = rows;
 
 resultsTableBody.innerHTML = '';
 for (var j = 0; j < rows.length; j++){
@@ -330,10 +311,10 @@ resultsTableBody.appendChild(tr);
 var noResults = document.getElementById('noResults');
 noResults.style.display = (rows.length === 0) ? 'block' : 'none';
 summary.textContent = 'Records: ' + rows.length;
-status.textContent = ''; // clear any stale status
+status.textContent = '';
 }
 
-/* Load CSV from file (user override) */
+// Load CSV from file (override)
 function loadCSVFile(file){
 if (!file) return;
 var reader = new FileReader();
@@ -346,8 +327,7 @@ renderTable();
 status.textContent = 'Loaded ' + rows.length + ' records from CSV';
 localStorage.setItem(LAST_DATA_KEY, JSON.stringify(rows));
 localStorage.setItem(USER_OVERRIDE_KEY, 'true');
-// Clear any prior remote data flag so next open doesn't auto-load stale data
-localStorage.setItem(STORAGE_VERSION_KEY, APP_DATA_VERSION);
+// Keep local version; the remote preload will skip if override=true
 } else {
 status.textContent = 'No valid rows found in CSV';
 allData = [];
@@ -360,7 +340,7 @@ status.textContent = 'Error reading CSV file';
 reader.readAsText(file);
 }
 
-/* Clear data (reset) */
+/* Clear data */
 clearBtn.addEventListener('click', function(){
 allData = [];
 localStorage.removeItem(LAST_DATA_KEY);
@@ -370,7 +350,7 @@ status.textContent = 'Data cleared';
 localStorage.removeItem(STORAGE_VERSION_KEY);
 });
 
-/* File input (override) */
+/* File input: override (upload) */
 fileInput.addEventListener('change', function(e){
 var file = e.target.files && e.target.files[0];
 if (file){
@@ -378,11 +358,11 @@ loadCSVFile(file);
 }
 });
 
-/* Live search (two fields) */
+/* Live search */
 if (searchBox) searchBox.addEventListener('input', function(){ renderTable(); });
 if (supplierBox) supplierBox.addEventListener('input', function(){ renderTable(); });
 
-/* Accent / theme persistence */
+/* Theme & accent persistence (optional) */
 function hexToRgba(hex, alpha){
 var r=0,g=0,b=0;
 if (hex.charAt(0) === '#') hex = hex.substring(1);
@@ -397,9 +377,20 @@ b = parseInt(hex.substring(4,6), 16);
 }
 return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
+(function initPrefs(){
+var savedAccent = localStorage.getItem('sl_accent');
+if (savedAccent){
+accentColor.value = savedAccent;
+document.documentElement.style.setProperty('--accent', savedAccent);
+}
+var savedTheme = localStorage.getItem('sl_theme');
+if (savedTheme === 'dark'){
+themeToggle.checked = true;
+document.documentElement.setAttribute('data-theme', 'dark');
+}
+})();
 accentColor.addEventListener('input', function(){
 document.documentElement.style.setProperty('--accent', accentColor.value);
-document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
 localStorage.setItem('sl_accent', accentColor.value);
 });
 
@@ -414,29 +405,11 @@ localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
 themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
-/* Remote preload logic (robust, to work on mobile) */
+/* Remote preload logic (robust, runs on open) */
 (function init(){
-// Apply saved prefs (accent/theme)
-var savedAccent = localStorage.getItem('sl_accent');
-if (savedAccent){
-accentColor.value = savedAccent;
-document.documentElement.style.setProperty('--accent', savedAccent);
-document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
-}
-
-var savedTheme = localStorage.getItem('sl_theme');
-if (savedTheme === 'dark'){
-themeToggle.checked = true;
-document.documentElement.setAttribute('data-theme', 'dark');
-} else if (savedTheme === 'light'){
-themeToggle.checked = false;
-document.documentElement.removeAttribute('data-theme');
-}
-
-// Remote preload with per-device override
+// If user uploaded their own CSV on this device, load it first
 var userOverride = localStorage.getItem(USER_OVERRIDE_KEY);
 if (userOverride === 'true'){
-// User already uploaded on this device
 var last = localStorage.getItem(LAST_DATA_KEY);
 if (last){
 try{ allData = JSON.parse(last); } catch(e){ allData = []; }
@@ -445,8 +418,10 @@ allData = [];
 }
 renderTable();
 status.textContent = 'Loaded your local override data';
-} else {
-// No per-device override: fetch remote stocks.csv
+return;
+}
+
+// Try to fetch remote stocks.csv
 fetch(REMOTE_CSV_URL, { cache: 'no-store' })
 .then(function(res){
 if (!res.ok) throw new Error('Remote fetch failed: ' + res.status);
@@ -462,19 +437,14 @@ localStorage.setItem(STORAGE_VERSION_KEY, APP_DATA_VERSION);
 })
 .catch(function(err){
 console.error(err);
-// Fallback: show demo data so UI remains usable on mobile
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
+// No remote data: show no data (no demo fallback)
+allData = [];
 renderTable();
-status.textContent = 'Remote load failed. Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+status.textContent = 'Remote load failed. No data loaded.';
+// Do not auto-fill demo data to avoid confusing mobile users
 });
-}
 
-// Scanner overlay hidden by default
+// Ensure the scanner overlay starts hidden
 scannerOverlay.style.display = 'none';
 })();
 
@@ -537,7 +507,7 @@ stopScanner();
 });
 });
 
-// Use this code (apply after scan)
+// Use this code (after scan)
 useCodeBtn.addEventListener('click', function(){
 if (lastDetectedCode){
 if (searchBox){
@@ -573,17 +543,16 @@ stopScanner();
 }
 });
 
-// Load sample
-loadSampleBtn.addEventListener('click', function(){
+// Demo data button (optional)
+LoadDemoBtn.addEventListener && LoadDemoBtn.addEventListener('click', function(){
+// This can be used to inject demo data if you want a quick test
 allData = [
 { dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
 { dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
 { dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
 ];
 renderTable();
-status.textContent = 'Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-localStorage.setItem(USER_OVERRIDE_KEY, 'true');
+status.textContent = 'Loaded demo data';
 });
 </script>
 
