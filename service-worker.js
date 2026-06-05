@@ -1,56 +1,64 @@
-// service-worker.js (update to v2)
-(function () {
-'use strict';
-var CACHE_NAME = 'stock-locator-cache-v2';
-// Ensure we cache the actual assets you serve (adjust if you add more files)
-var urlsToCache = [
-'/index.html',
-'/manifest.json'
+const CACHE_NAME = 'stock-locator-v2'; // Changing this version forces a cache reset
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './manifest.json',
+  './search192.png'
 ];
 
-self.addEventListener('install', function (event) {
-event.waitUntil(
-caches.open(CACHE_NAME).then(function (cache) {
-return cache.addAll(urlsToCache);
-})
-);
+// Install Event - Caches the essential shell files
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => {
+      // Forces the waiting service worker to become the active service worker immediately
+      return self.skipWaiting();
+    })
+  );
 });
 
-self.addEventListener('activate', function (event) {
-var cacheWhitelist = [CACHE_NAME];
-event.waitUntil(
-caches.keys().then(function (keyList) {
-return Promise.all(
-keyList.map(function (key) {
-if (cacheWhitelist.indexOf(key) === -1) {
-return caches.delete(key);
-}
-})
-);
-})
-);
+// Activate Event - Cleans up old caches from previous versions
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Service Worker: Clearing Old Cache');
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => {
+      // Forces all open browser tabs to immediately fall under the control of this new service worker
+      return self.clients.claim();
+    })
+  );
 });
 
-self.addEventListener('fetch', function (event) {
-var request = event.request;
-event.respondWith(
-caches.match(request).then(function (response) {
-if (response) return response;
+// Fetch Event - Network-First Strategy for the CSV data, Cache-First for local assets
+self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
 
-return fetch(request).then(function (networkResponse) {
-// Only cache successful GET responses
-if (request.method === 'GET' && networkResponse && networkResponse.status === 200) {
-var responseClone = networkResponse.clone();
-caches.open(CACHE_NAME).then(function (cache) {
-cache.put(request, responseClone);
+  // CRITICAL: If fetching the inventory CSV file, always go to the network directly!
+  if (requestUrl.pathname.endsWith('.csv') || requestUrl.search.includes('v=')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // Fallback to cache only if completely offline
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+
+  // For app layout assets (HTML, CSS, Icons), look in cache first, fallback to network
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request);
+    })
+  );
 });
-}
-return networkResponse;
-}).catch(function () {
-// Optional: return a fallback offline page if you add one
-// return caches.match('/offline.html');
-});
-})
-);
-});
-})();
