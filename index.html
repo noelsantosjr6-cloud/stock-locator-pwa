@@ -207,7 +207,7 @@ input:focus{ border-color: var(--accent); }
 /* Public URL configuration */
 const REMOTE_CSV_URL = 'https://raw.githubusercontent.com/noelsantosjr6-cloud/stock-locator-pwa/refs/heads/main/stocks.csv';
 const REMOTE_VERSION_URL = ''; 
-const APP_DATA_VERSION = '1.0.3'; 
+const APP_DATA_VERSION = '1.0.1'; 
 
 // Storage keys
 const STORAGE_VERSION_KEY = 'sl_data_version';
@@ -539,13 +539,10 @@ scanBtn.addEventListener('click', function(){
     });
 });
 
-// Appends scanned data into the supplierBox input and strips leading zeros
+// Appends scanned data into the supplierBox input 
 useCodeBtn.addEventListener('click', function(){
   if (typeof lastDetectedCode === 'string' && lastDetectedCode.length > 0){
-    // Remove leading zeros from the barcode string
-    var cleanCode = lastDetectedCode.replace(/^0+/, ''); 
-    
-    supplierBox.value = cleanCode;
+    supplierBox.value = lastDetectedCode;
     renderTable();
     stopScanner();
   }
