@@ -51,6 +51,615 @@ mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3p
 /* Centered Core Actions Area */
 .centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
 
+/* Side-by-Side Scanner Button Grid Layout */
+.scanGrid { display: flex; width: 100%; max-width: 340px; gap: 8px; justify-content: center; }
+.scanGrid button { flex: 1; font-size: 13px; padding: 12px 6px; line-height: 1.2; text-align: center; }
+
+/* Layout container for status and live timestamp info row */
+.statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
+
+/* Desktop-default Table Styling */
+.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
+table.resultsTable th, table.resultsTable td { border: 1px solid #ddd; padding: 10px 8px; text-align: left; }
+table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
+[data-theme="dark"] th { color: #000; }
+.muted{ color: var(--muted); font-size:12px; }
+
+/* Barcode scanner overlay */
+#scannerOverlay{ position: fixed; inset:0; background: rgba(0,0,0,.7); display:none; justify-content:center; align-items:center; z-index:9999 }
+#scannerBox{ width:90%; max-width:600px; background:#111; border-radius:12px; padding:12px; position:relative }
+#scannerVideo{ width:100%; height:auto; border-radius:6px; background:#000; display:block }
+#scannerClose{ position:absolute; top:6px; right:6px; background:#333; color:#fff; border:0; border-radius:6px; padding:6px 10px; cursor:pointer }
+#useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
+
+/* MOBILE RESPONSIVE BLOCKS */
+@media (max-width: 700px){
+  main{ padding:8px }
+  input[type="text"]{ max-width: 100%; }
+  
+  /* Force the table to stop acting like a table layout on mobile */
+  table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
+    display: block; 
+  }
+  
+  /* Hide table headers completely on mobile */
+  table.resultsTable thead tr { position: absolute; top: -9999px; left: -9999px; }
+  
+  /* Turn each row into an independent card */
+  table.resultsTable tr {
+    background: var(--card);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  
+  /* Style each cell like a labeled data row with structural alignment fixes */
+  table.resultsTable td {
+    border: none;
+    padding: 6px 4px;
+    position: relative;
+    padding-left: 42%;
+    white-space: normal; 
+    text-overflow: clip;
+    overflow: visible;
+    font-size: 14px;
+    min-height: 1.8em; /* Prevents empty database fields from collapsing layout lines */
+    display: block;
+    text-align: left;
+  }
+  
+  /* Dynamically insert the column names using CSS data-labels */
+  table.resultsTable td:before {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 38%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: bold;
+    color: var(--muted);
+  }
+  
+  /* Label assignments */
+  table.resultsTable td:nth-of-type(1):before { content: "Dept:"; }
+  table.resultsTable td:nth-of-type(2):before { content: "Warehouse:"; }
+  table.resultsTable td:nth-of-type(3):before { content: "Supplier Ref:"; }
+  table.resultsTable td:nth-of-type(4):before { content: "Part Number:"; }
+  table.resultsTable td:nth-of-type(5):before { content: "Inventory:"; }
+  table.resultsTable td:nth-of-type(6):before { content: "SubLocation:"; }
+  
+  /* Make the Part Number field visually pop out */
+  table.resultsTable td:nth-of-type(4) {
+    font-weight: bold;
+    font-size: 15px;
+    border-bottom: 1px dashed #eee;
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+  }
+}
+
+input:focus, button:focus{ outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25); }
+input:focus{ border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+<img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
+<strong>Stock Locator</strong>
+<div class="muted" style="margin-left:auto; padding-right:8px"></div>
+<button id="clearBtn" class="danger" title="Clear cached data" style="margin-left:8px; padding: 8px 12px; font-size:13px;">Clear App Cache</button>
+</header>
+
+<main>
+<section class="card" aria-label="data controls">
+<div class="row" style="gap:12px; align-items:flex-start;">
+ 
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
+ <label for="searchBox" class="muted" style="font-weight:600">Search Part Number</label><br/>
+ <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1" />
+ </div>
+ 
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
+ <label for="supplierBox" class="muted" style="font-weight:600">Search Supplier Reference</label><br/>
+ <input id="supplierBox" type="text" placeholder="Supplier Reference" />
+ </div>
+
+ <div class="centerActions" aria-label="scan actions">
+   <div class="scanGrid">
+     <button id="scanQrBtn" class="fixed" title="Scan QR Code into Part Number">Scan QR Code</button>
+     <button id="scanBarBtn" class="fixed" title="Scan Barcode into Supplier Reference">Scan Supplier Ref</button>
+   </div>
+   <button id="resetSearchBtn" class="secondary" title="Reset all typed searches" style="width:100%; max-width:340px; padding:10px; background:#444;">Reset Search Fields</button>
+ </div>
+</div>
+
+<div class="row" style="gap:12px;align-items:center;margin-top:12px;border-top:1px dashed #eee;padding-top:12px;">
+ <label for="accentColor" style="font-weight:600" title="Accent color (theme color)">Accent color</label>
+ <input id="accentColor" type="color" value="#2e8b57" />
+ <label for="themeToggle" style="margin-left:8px;">Dark mode</label>
+ <input id="themeToggle" type="checkbox" />
+ <span id="themeStatus" class="muted" style="margin-left:8px"></span>
+</div>
+
+<div class="statusContainer">
+  <div id="status" class="muted">Loading stocks.csv from host...</div>
+  <div id="timestampDisplay" class="muted" style="font-weight: 600;">Live Sync: --/--/-- --:--</div>
+</div>
+
+</section>
+
+<section class="card" aria-label="results">
+<h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
+
+<div class="tableWrap">
+ <table id="resultsTable" class="resultsTable" aria-label="stock results">
+ <thead>
+ <tr>
+ <th>Dept</th>
+ <th>Warehouse</th>
+ <th>Supplier Reference</th>
+ <th>Part Number</th>
+ <th>Physical Inventory</th>
+ <th>SubLocation</th>
+ </tr>
+ </thead>
+ <tbody></tbody>
+ </table>
+</div>
+
+<div id="noResults" class="muted" style="display:none;margin-top:6px">No results match your search.</div>
+<div id="summary" class="muted" style="margin-top:6px"></div>
+</section>
+</main>
+
+<div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
+<div id="scannerBox" style="position:relative;">
+ <button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
+ <video id="scannerVideo" autoplay playsinline></video>
+ <button id="useCodeBtn" title="Use detected code" class="accent" style="display:none; z-index:2;">Use this code</button>
+</div>
+</div>
+
+<script>
+/* Public URL configuration with live cache-busting timestamp tag */
+const REMOTE_CSV_URL = 'https://raw.githubusercontent.com/noelsantosjr6-cloud/stock-locator-pwa/refs/heads/main/stocks.csv?v=' + new Date().getTime();
+const LAST_DATA_KEY = 'sl_lastData';
+const LAST_TIME_KEY = 'sl_lastTime';
+
+// Data arrays
+var allData = [];
+var filteredData = [];
+
+// DOM Element Registry
+var searchBox = document.getElementById('searchBox');
+var supplierBox = document.getElementById('supplierBox');
+var resultsTableBody = document.querySelector('#resultsTable tbody');
+var status = document.getElementById('status');
+var timestampDisplay = document.getElementById('timestampDisplay');
+var summary = document.getElementById('summary');
+var clearBtn = document.getElementById('clearBtn');
+var scanQrBtn = document.getElementById('scanQrBtn');
+var scanBarBtn = document.getElementById('scanBarBtn');
+var resetSearchBtn = document.getElementById('resetSearchBtn');
+var accentColor = document.getElementById('accentColor');
+var themeToggle = document.getElementById('themeToggle');
+var themeStatus = document.getElementById('themeStatus');
+var scannerOverlay = document.getElementById('scannerOverlay');
+var scannerVideo = document.getElementById('scannerVideo');
+var scannerClose = document.getElementById('scannerClose');
+var useCodeBtn = document.getElementById('useCodeBtn');
+
+// Lag protection timer
+var searchTimeout = null;
+
+// Routing Variable: tracks which search field receives the data ('part' or 'supplier')
+var activeScanTarget = 'part'; 
+
+function escapeHtml(text){
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function parseCSVLine(line){
+  var res = [];
+  var cur = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++){
+    var ch = line[i];
+    if (inQuotes){
+      if (ch === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === '"'){ inQuotes = true; }
+      else if (ch === ','){ res.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  res.push(cur);
+  return res;
+}
+
+function parseCSV(text){
+  var lines = text.split(/\r?\n/);
+  var cleaned = [];
+  for (var i = 0; i < lines.length; i++){
+    var l = lines[i];
+    if (l && l.trim().length > 0) cleaned.push(l);
+  }
+  if (cleaned.length < 2) return [];
+
+  var headers = parseCSVLine(cleaned[0]);
+  var lower = headers.map(h => (h || '').toString().toLowerCase().trim());
+  
+  var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
+  for (var k = 0; k < lower.length; k++){
+    var h = lower[k];
+    if (iDept === -1 && (h.indexOf('dept') !== -1 || h.indexOf('department') !== -1)) iDept = k;
+    if (iW === -1 && h.indexOf('warehouse') !== -1) iW = k;
+    if (iSR === -1 && h.indexOf('supplier') !== -1 && h.indexOf('reference') !== -1) iSR = k;
+    if (iP === -1 && h.indexOf('part') !== -1) iP = k;
+    if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
+    if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
+  }
+
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    var qRaw = cols[iQ] || '0';
+    var q = parseInt(qRaw.toString().replace(/[^0-9.\-]/g, ''), 10);
+    if (isNaN(q)) q = 0;
+    
+    rows.push({
+      dept: cols[iDept] || '',
+      warehouse: cols[iW] || '',
+      supplierRef: cols[iSR] || '',
+      part: cols[iP] || '',
+      sub: cols[iS] || '',
+      qty: q
+    });
+  }
+  return rows;
+}
+
+function matchesQuery(value, query){
+  var q = (query || '').toString().trim();
+  if (q.length === 0) return true;
+  var v = (value || '').toString().toLowerCase().trim();
+  return v.indexOf(q.toLowerCase()) !== -1;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  var cleanText = escapeHtml(text);
+  var cleanQuery = (query || '').toString().trim();
+  if (!cleanQuery) return cleanText;
+  
+  try {
+    var regex = new RegExp('(' + escapeRegExp(cleanQuery) + ')', 'gi');
+    return cleanText.replace(regex, '<mark class="match">$1</mark>');
+  } catch(e) {
+    return cleanText;
+  }
+}
+
+function renderTable(){
+  var partQuery = (searchBox.value || '').toString().trim();
+  var supplierQuery = (supplierBox.value || '').toString().trim();
+
+  var rows = [];
+  for (var i = 0; i < allData.length; i++){
+    var row = allData[i];
+    if (!row || row.qty <= 0) continue;
+
+    if (matchesQuery(row.part, partQuery) && matchesQuery(row.supplierRef, supplierQuery)){
+      rows.push(row);
+    }
+  }
+  filteredData = rows;
+
+  var fragment = document.createDocumentFragment();
+  var maxDisplay = Math.min(rows.length, 100); 
+
+  for (var j = 0; j < maxDisplay; j++){
+    var r = rows[j];
+    var tr = document.createElement('tr');
+    
+    var highlightedPart = highlightText(r.part, partQuery);
+    var highlightedSupplier = highlightText(r.supplierRef, supplierQuery);
+    
+    tr.innerHTML = 
+      '<td>' + escapeHtml(r.dept) + '</td>' +
+      '<td>' + escapeHtml(r.warehouse) + '</td>' +
+      '<td>' + highlightedSupplier + '</td>' +
+      '<td>' + highlightedPart + '</td>' +
+      '<td>' + r.qty + '</td>' +
+      '<td>' + escapeHtml(r.sub) + '</td>';
+    fragment.appendChild(tr);
+  }
+
+  resultsTableBody.innerHTML = '';
+  resultsTableBody.appendChild(fragment);
+
+  document.getElementById('noResults').style.display = (rows.length === 0) ? 'block' : 'none';
+  
+  if (rows.length > 100) {
+    summary.textContent = 'Showing top 100 of ' + rows.length + ' records';
+  } else {
+    summary.textContent = 'Records: ' + rows.length;
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(renderTable, 220); 
+}
+
+searchBox.addEventListener('input', debounceSearch);
+supplierBox.addEventListener('input', debounceSearch);
+
+resetSearchBtn.addEventListener('click', function(){
+  searchBox.value = '';
+  supplierBox.value = '';
+  renderTable();
+});
+
+clearBtn.addEventListener('click', function(){
+  if(confirm("Clear application cache and force-reload fresh data from GitHub?")){
+    allData = [];
+    localStorage.removeItem(LAST_DATA_KEY);
+    localStorage.removeItem(LAST_TIME_KEY);
+    renderTable();
+    status.textContent = 'Data cleared';
+    location.reload();
+  }
+});
+
+function hexToRgba(hex, alpha){
+  var r=0,g=0,b=0;
+  if (hex.charAt(0) === '#') hex = hex.substring(1);
+  if (hex.length === 3){
+    r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+    g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+    b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+  } else if (hex.length === 6){
+    r = parseInt(hex.substring(0,2), 16);
+    g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
+  }
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+accentColor.addEventListener('input', function(){
+  document.documentElement.style.setProperty('--accent', accentColor.value);
+  document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
+  localStorage.setItem('sl_accent', accentColor.value);
+});
+
+themeToggle.addEventListener('change', function(){
+  if (themeToggle.checked){
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+  themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
+});
+
+function getFormattedDate() {
+  var now = new Date();
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var month = months[now.getMonth()];
+  var day = now.getDate();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+  return month + ' ' + day + ', ' + hours + ':' + minutes + ' ' + ampm;
+}
+
+(function init(){
+  var savedAccent = localStorage.getItem('sl_accent');
+  if (savedAccent){
+    accentColor.value = savedAccent;
+    document.documentElement.style.setProperty('--accent', savedAccent);
+    document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
+  }
+
+  var savedTheme = localStorage.getItem('sl_theme');
+  if (savedTheme === 'dark'){
+    themeToggle.checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (savedTheme === 'light'){
+    themeToggle.checked = false;
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+      themeToggle.checked = true;
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  }
+
+  status.textContent = 'Checking for inventory updates...';
+  
+  fetch(REMOTE_CSV_URL, { cache: 'no-store' })
+    .then(r => r.text())
+    .then(text => {
+      var rows = parseCSV(text);
+      if (rows.length > 0) {
+        allData = rows;
+        renderTable();
+        status.textContent = 'Inventory up to date';
+        
+        var timestampStr = "Live Sync: " + getFormattedDate();
+        timestampDisplay.textContent = timestampStr;
+        
+        localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+        localStorage.setItem(LAST_TIME_KEY, timestampStr);
+      } else {
+        status.textContent = 'Error reading file. Loading backup...';
+        loadBackupData();
+      }
+    })
+    .catch(function(){
+      status.textContent = 'Offline Mode. Loading backup...';
+      loadBackupData();
+    });
+
+  scannerOverlay.style.display = 'none';
+})();
+
+function loadBackupData() {
+  var last = localStorage.getItem(LAST_DATA_KEY);
+  var lastTime = localStorage.getItem(LAST_TIME_KEY);
+  if (last){ 
+    try { 
+      allData = JSON.parse(last); 
+      renderTable();
+      if(lastTime) {
+        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
+      }
+    } catch(e) { 
+      allData = []; 
+    } 
+  }
+}
+
+/* Dual Scanner Core Configuration Engine */
+var detector;
+var streamActive = false;
+var videoStream = null;
+var lastDetectedCode = '';
+
+// Left Button Event Handler: Targets Part Number Box with QR Decoder
+scanQrBtn.addEventListener('click', function(){
+  activeScanTarget = 'part';
+  startScannerEngine(['qr_code']);
+});
+
+// Right Button Event Handler: Targets Supplier Box with Line Barcode Decoders
+scanBarBtn.addEventListener('click', function(){
+  activeScanTarget = 'supplier';
+  startScannerEngine(['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e']);
+});
+
+function startScannerEngine(allowedFormats) {
+  if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
+    alert('Camera access is not supported in this browser.');
+    return;
+  }
+  
+  scannerOverlay.style.display = 'flex';
+  
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream){
+      videoStream = stream;
+      scannerVideo.srcObject = stream;
+      scannerVideo.play();
+      streamActive = true;
+      lastDetectedCode = '';
+      useCodeBtn.style.display = 'none';
+
+      if ('BarcodeDetector' in window){
+        // Initialize decoder strictly bound to selected button target configuration
+        detector = new BarcodeDetector({ formats: allowedFormats });
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        canvas.width = 640; canvas.height = 480;
+
+        function tick(){
+          if (!streamActive) return;
+          try{
+            ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
+            detector.detect(canvas)
+              .then(barcodes => {
+                if (barcodes && barcodes.length > 0){
+                  var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
+                  if (code){
+                    lastDetectedCode = code;
+                    useCodeBtn.style.display = 'block';
+                  }
+                }
+                requestAnimationFrame(tick);
+              })
+              .catch(function(){ requestAnimationFrame(tick); });
+          } catch(err){
+            requestAnimationFrame(tick);
+          }
+        }
+        requestAnimationFrame(tick);
+      } else {
+        alert('Native BarcodeDetector API not found. Please type manually or ensure HTTPS access.');
+      }
+    })
+    .catch(function(err){
+      alert('Unable to access camera.');
+      stopScanner();
+    });
+}
+
+// Routes captured text directly to the correct input field box
+useCodeBtn.addEventListener('click', function(){
+  if (typeof lastDetectedCode === 'string' && lastDetectedCode.length > 0){
+    var cleanCode = lastDetectedCode.replace(/^0+/, ''); 
+    
+    if (activeScanTarget === 'part') {
+      searchBox.value = cleanCode;
+    } else {
+      supplierBox.value = cleanCode;
+    }
+    
+    renderTable();
+    stopScanner();
+  }
+});
+
+scannerClose.addEventListener('click', stopScanner);
+function stopScanner(){
+  streamActive = false;
+  if (videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); }
+  videoStream = null;
+  scannerVideo.srcObject = null;
+  scannerOverlay.style.display = 'none';
+  useCodeBtn.style.display = 'none';
+  lastDetectedCode = '';
+}
+scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopScanner(); });
+</script>
+
+</body>
+</html>
+main{ padding:14px }
+.card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
+.row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+label{ font-weight:600 }
+input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:100%; max-width:340px }
+button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight: 600; }
+button.fixed{ background:#2e8b57; }
+button.secondary{ background:#666; }
+button.danger{ background:#b22222; }
+
+/* Glowing highlight style */
+mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
+[data-theme="dark"] mark.match { background: #ffca28; color: #000; }
+
+/* Centered Core Actions Area */
+.centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
+
 /* Layout container for status and live timestamp info row */
 .statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
 
