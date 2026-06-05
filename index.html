@@ -1,191 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Stock Locator - PWA Enhanced (remote-default preload, 6-column table)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Locator - PWA Enhanced (remote-default preload, 6-column table)</title>
 
-<link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<style>
-:root{
---bg: #f5f5f5;
---panel: #fff;
---text: #333;
---muted: #666;
---accent: #2e8b57;
---card: #fff;
-}
-[data-theme="dark"]{
---bg: #0f1117;
---panel: #171a1f;
---text: #eaeaea;
---muted: #aaa;
---accent: #4ecdc4;
---card: #1e1f24;
-}
-*{box-sizing:border-box}
-html, body { height: 100%; }
-body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
-header{padding:12px 14px;background: var(--panel);border-bottom:1px solid var(--accent);display:flex;gap:12px;align-items:center}
-header strong{font-size:16px}
-main{padding:14px}
-.card{background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-label{font-weight:600}
-input[type="file"]{font-size:14px}
-input[type="text"]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;width:100%;max-width:340px}
-button{color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
-button.accent{ background: var(--accent); }
-button.fixed{ background: #2e8b57; }
-button.secondary{ background:#666; }
+  <style>
+  :root{
+    --bg: #f5f5f5;
+    --panel: #fff;
+    --text: #333;
+    --muted: #666;
+    --accent: #2e8b57;
+    --card: #fff;
+  }
+  [data-theme="dark"]{
+    --bg: #0f1117;
+    --panel: #171a1f;
+    --text: #eaeaea;
+    --muted: #aaa;
+    --accent: #4ecdc4;
+    --card: #1e1f24;
+  }
+  *{box-sizing:border-box}
+  html, body { height: 100%; }
+  body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header{padding:12px 14px;background: var(--panel);border-bottom:1px solid var(--accent);display:flex;gap:12px;align-items:center}
+  header strong{font-size:16px}
+  main{padding:14px}
+  .card{background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:12px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  label{font-weight:600}
+  input[type="file"]{font-size:14px}
+  input[type="text"]{padding:8px 10px;border:1px solid #ccc;border-radius:6px;width:100%;max-width:340px}
+  button{color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
+  button.accent{ background: var(--accent); } 
+  button.fixed{ background: #2e8b57; } 
+  button.secondary{ background:#666; }
 
-/* Centered Scan button (only one action) */
-.centerActions { width:100%; display:flex; justify-content:center; padding:6px 0; }
+  /* Centered Scan button (only one action) */
+  .centerActions { width:100%; display:flex; justify-content:center; padding:6px 0; }
 
-/* Search inputs area styling (two fields side-by-side on wide screens) */
-.searchRow { display:flex; gap:12px; align-items:flex-start; width:100%; }
-.leftCol { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  /* Search inputs area styling (two fields side-by-side on wide screens) */
+  .searchRow { display:flex; gap:12px; align-items:flex-start; width:100%; }
+  .leftCol { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
-.orSupplierLine { margin:6px 0 6px 0; font-weight:600; font-size:14px; color: var(--muted); }
+  .orSupplierLine { margin:6px 0 0 0; font-weight:600; font-size:14px; color: var(--muted); }
 
-@media (max-width: 700px){
-.searchRow { flex-direction:column; }
-main{ padding:8px }
-}
+  @media (max-width: 700px){
+    .searchRow { flex-direction:column; }
+    main{ padding:8px }
+  }
 
-/* 6-column table: horizontal scroll, no header wrap */
-.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table.resultsTable {
-width: 900px;
-min-width: 900px;
-border-collapse: collapse;
-table-layout: fixed;
-}
-table.resultsTable th,
-table.resultsTable td {
-border: 1px solid #ddd;
-padding: 8px;
-text-align: left;
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;
-width: 150px;
-}
-table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
+  /* 6-column table: horizontal scroll, no header wrap */
+  .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.resultsTable {
+    width: 900px;
+    min-width: 900px;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  table.resultsTable th,
+  table.resultsTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 150px;
+  }
+  table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 
-[data-theme="dark"] th { color: #000; }
-.muted{ color: var(--muted); font-size:12px; }
+  [data-theme="dark"] th { color: #000; }
+  .muted{ color: var(--muted); font-size:12px}
 
-/* Barcode scanner overlay (stable close button) */
-#scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
-#scannerBox{width:90%;max-width:600px;background:#111;border-radius:12px;padding:12px;position:relative}
-#scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block}
-#scannerClose{position:absolute;top:6px;right:6px;background:#333;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer}
-#useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
-@media (max-width: 700px){
-main{padding:8px}
-}
-input:focus, button:focus{outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25);}
-input:focus{ border-color: var(--accent); }
-</style>
+  /* Barcode scanner overlay (stable close button) */
+  #scannerOverlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center;z-index:9999}
+  #scannerBox{width:90%;max-width:600px;background:#111;border-radius:12px;padding:12px;position:relative}
+  #scannerVideo{width:100%;height:auto;border-radius:6px;background:#000; display:block}
+  #scannerClose{position:absolute;top:6px;right:6px;background:#333;color:#fff;border:0;border-radius:6px;padding:6px 10px;cursor:pointer}
+  #useCodeBtn{ position:absolute; bottom:8px; left:50%; transform: translateX(-50%); padding:8px 12px; display:none; z-index:2; background:#2e8b57; border-radius:6px; }
+  @media (max-width: 700px){
+    main{padding:8px}
+  }
+  input:focus, button:focus{outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25);}
+  input:focus{ border-color: var(--accent); }
+  </style>
 </head>
 <body>
 
 <header>
-<strong>Stock Locator</strong>
-<div class="muted" style="margin-left:auto; padding-right:8px"></div>
-<button id="clearBtn" class="secondary" title="Clear loaded data" style="margin-left:8px">Clear data</button>
+  <strong>Stock Locator</strong>
+  <div class="muted" style="margin-left:auto; padding-right:8px"></div>
+  <button id="clearBtn" class="secondary" title="Clear loaded data" style="margin-left:8px">Clear data</button>
 </header>
 
 <main>
 <section class="card" aria-label="data controls">
-<div class="searchRow" style="gap:12px;align-items:flex-start">
-<!-- Left: CSV upload + two search fields -->
-<div class="leftCol" style="min-width:0;">
-<div>
-<label for="fileInput" class="label">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
-<input id="fileInput" type="file" accept=".csv" />
-</div>
+  <div class="searchRow" style="gap:12px; align-items:flex-start">
+    <!-- Left: CSV upload + two search fields -->
+    <div class="leftCol" style="min-width:0;">
+      <div>
+        <label for="fileInput" class="label" style="font-weight:600">CSV data (Dept, Warehouse, Supplier Reference, Part Number, Physical Inventory, SubLocation)</label><br/>
+        <input id="fileInput" type="file" accept=".csv" />
+      </div>
 
-<div class="searchRow" style="gap:12px; align-items:flex-start;">
-<div style="flex:1 1 auto; min-width:0;">
-<label for="searchBox" class="label">Search Part Number</label><br/>
-<input id="searchBox" type="text" placeholder="e.g., TPMT 2-1 or TPMT 2-1*" />
-<div class="orSupplierLine">or Supplier Reference</div>
-<input id="supplierBox" type="text" placeholder="Supplier Reference" />
-</div>
-</div>
-</div>
+      <div class="searchRow" style="gap:12px; align-items:flex-start; margin-top:6px;">
+        <div style="flex:1 1 auto; min-width:0;">
+          <label for="searchBox" class="label" style="font-weight:600">Search Part Number</label><br/>
+          <input id="searchBox" type="text" placeholder="e.g., TPMT 2-1" />
+        </div>
+        <div style="flex:1 1 auto; min-width:0;">
+          <label for="supplierBox" class="label" style="font-weight:600">Search Supplier Reference</label><br/>
+          <input id="supplierBox" type="text" placeholder="Supplier Reference" />
+        </div>
+      </div>
+    </div>
 
-<!-- Centered Scan button -->
-<div class="centerActions" aria-label="scan action">
-<button id="scanBtn" class="fixed" title="Scan barcode using camera">Scan Barcode</button>
-</div>
-</div>
+    <!-- Centered Scan button -->
+    <div class="centerActions" aria-label="scan action" style="align-self:center">
+      <button id="scanBtn" class="fixed" title="Scan barcode using camera">Scan Barcode</button>
+    </div>
+  </div>
 
-<div class="row" style="gap:12px;align-items:center;margin-top:6px">
-<label for="accentColor" title="Accent color (theme color)">Accent color</label>
-<input id="accentColor" type="color" value="#2e8b57" />
-<label for="themeToggle" style="margin-left:8px;">Dark mode</label>
-<input id="themeToggle" type="checkbox" />
-<span id="themeStatus" class="muted" style="margin-left:8px"></span>
-</div>
+  <div class="row" style="gap:12px;align-items:center;margin-top:6px">
+     <label for="accentColor" title="Accent color (theme color)">Accent color</label>
+     <input id="accentColor" type="color" value="#2e8b57" />
+     <label for="themeToggle" style="margin-left:8px;">Dark mode</label>
+     <input id="themeToggle" type="checkbox" />
+     <span id="themeStatus" class="muted" style="margin-left:8px"></span>
+  </div>
 
-<div id="status" class="muted" style="margin-top:8px">No data loaded yet. The default stocks.csv will auto-load on first run.</div>
+  <div id="status" class="muted" style="margin-top:8px">Loading stocks.csv from host...</div>
 
-<div style="margin-top:6px;">
-<button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px;">
-Load sample demo data
-</button>
-</div>
+  <div style="margin-top:6px;">
+    <button id="loadSampleBtn" class="secondary" style="background:#777; padding:8px 12px; border-radius:6px;">
+      Load sample demo data
+    </button>
+  </div>
 </section>
 
 <section class="card" aria-label="results">
-<h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
+  <h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
 
-<div class="tableWrap">
-<table id="resultsTable" class="resultsTable" aria-label="stock results">
-<thead>
-<tr>
-<th>Dept</th>
-<th>Warehouse</th>
-<th>Supplier Reference</th>
-<th>Part Number</th>
-<th>Physical Inventory</th>
-<th>SubLocation</th>
-</tr>
-</thead>
-<tbody><!-- rows injected here --></tbody>
-</table>
-</div>
+  <div class="tableWrap">
+    <table id="resultsTable" class="resultsTable" aria-label="stock results">
+      <thead>
+        <tr>
+          <th>Dept</th>
+          <th>Warehouse</th>
+          <th>Supplier Reference</th>
+          <th>Part Number</th>
+          <th>Physical Inventory</th>
+          <th>SubLocation</th>
+        </tr>
+      </thead>
+      <tbody><!-- rows injected here --></tbody>
+    </table>
+  </div>
 
-<div id="noResults" class="muted" style="display:none;margin-top:6px">No results match your search.</div>
-<div id="summary" class="muted" style="margin-top:6px"></div>
+  <div id="noResults" class="muted" style="display:none;margin-top:6px">No results match your search.</div>
+  <div id="summary" class="muted" style="margin-top:6px"></div>
 </section>
 </main>
 
 <!-- Barcode scanner overlay -->
 <div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
-<div id="scannerBox" style="position:relative;">
-<button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
-<video id="scannerVideo" autoplay playsinline></video>
-<button id="useCodeBtn" title="Use detected code" class="accent" style="display:none; z-index:2;">Use this code</button>
-</div>
+  <div id="scannerBox" style="position:relative;">
+    <button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
+    <video id="scannerVideo" autoplay playsinline></video>
+    <button id="useCodeBtn" title="Use detected code" class="accent" style="display:none; z-index:2;">Use this code</button>
+  </div>
 </div>
 
 <script>
 /* Remote preload configuration (replace with your host URLs) */
-const REMOTE_CSV_URL = 'https://your-host.example/stocks.csv'; // replace with your actual URL
-const REMOTE_VERSION_URL = 'https://your-host.example/stocks_version.json'; // optional; replace or remove
+const REMOTE_CSV_URL = 'https://your-host.example/stocks.csv';      // replace with your actual URL
+const REMOTE_VERSION_URL = 'https://your-host.example/stocks_version.json'; // optional; replace or remove if you don't have a version endpoint
 const APP_DATA_VERSION = '1.0.1'; // bump this when you publish a new remote stocks.csv
 
+// Storage keys
 const STORAGE_VERSION_KEY = 'sl_data_version';
 const LAST_DATA_KEY = 'sl_lastData';
-const USER_OVERRIDE_KEY = 'sl_userOverride'; // set to 'true' when a user uploads their own CSV
+const USER_OVERRIDE_KEY = 'sl_userOverride'; // 'true' when a user uploads their own CSV
 
 // Data
 var allData = [];
@@ -209,478 +212,382 @@ var scannerVideo = document.getElementById('scannerVideo');
 var scannerClose = document.getElementById('scannerClose');
 var useCodeBtn = document.getElementById('useCodeBtn');
 
-// Simple helpers
+// Helpers
 function escapeHtml(text){
-if (text == null) return '';
-return String(text)
-.replace(/&/g, '&amp;')
-.replace(/</g, '&lt;')
-.replace(/>/g, '&gt;')
-.replace(/"/g, '&quot;')
-.replace(/'/g, '&#39;');
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// CSV parsing for 6 columns
+// CSV helpers (6 columns)
 function parseCSVLine(line){
-var res = [];
-var cur = '';
-var inQuotes = false;
-for (var i = 0; i < line.length; i++){
-var ch = line[i];
-if (inQuotes){
-if (ch === '"'){
-if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
-} else { cur += ch; }
-} else {
-if (ch === '"'){ inQuotes = true; }
-else if (ch === ','){ res.push(cur); cur = ''; }
-else { cur += ch; }
-}
-}
-res.push(cur);
-return res;
+  var res = [];
+  var cur = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++){
+    var ch = line[i];
+    if (inQuotes){
+      if (ch === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === '"'){ inQuotes = true; }
+      else if (ch === ','){ res.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  res.push(cur);
+  return res;
 }
 function parseCSV(text){
-var lines = text.split(/\r?\n/);
-var cleaned = [];
-for (var i = 0; i < lines.length; i++){
-var l = lines[i];
-if (l && l.trim().length > 0) cleaned.push(l);
-}
-if (cleaned.length < 2) return [];
+  var lines = text.split(/\r?\n/);
+  var cleaned = [];
+  for (var i = 0; i < lines.length; i++){
+    var l = lines[i];
+    if (l && l.trim().length > 0) cleaned.push(l);
+  }
+  if (cleaned.length < 2) return [];
 
-var headers = parseCSVLine(cleaned[0]);
-var lower = [];
-for (var j = 0; j < headers.length; j++){
-lower.push((headers[j] || '').toString().toLowerCase().trim());
-}
+  var headers = parseCSVLine(cleaned[0]);
+  var lower = headers.map(h => (h || '').toString().toLowerCase().trim());
 
-var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
-for (var k = 0; k < lower.length; k++){
-var h = lower[k];
-if (iDept === -1 && (h.indexOf('dept') !== -1 || h.indexOf('department') !== -1)) iDept = k;
-if (iW === -1 && h.indexOf('warehouse') !== -1) iW = k;
-if (iSR === -1 && h.indexOf('supplier') !== -1 && h.indexOf('reference') !== -1) iSR = k;
-if (iP === -1 && h.indexOf('part') !== -1) iP = k;
-if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
-if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
-}
+  var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
+  for (var k = 0; k < lower.length; k++){
+    var h = lower[k];
+    if (iDept === -1 && (h.indexOf('dept') !== -1 || h.indexOf('department') !== -1)) iDept = k;
+    if (iW === -1 && h.indexOf('warehouse') !== -1) iW = k;
+    if (iSR === -1 && h.indexOf('supplier') !== -1 && h.indexOf('reference') !== -1) iSR = k;
+    if (iP === -1 && h.indexOf('part') !== -1) iP = k;
+    if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
+    if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
+  }
+  // Fallbacks if headers are in different order
+  if (iDept === -1) for (var t=0; t<lower.length; t++){ if (lower[t].indexOf('dept') !== -1 || lower[t].indexOf('department') !== -1) { iDept = t; break; } }
+  if (iW === -1) for (var t2=0; t2<lower.length; t2++){ if (lower[t2].indexOf('warehouse') !== -1) { iW = t2; break; } }
+  if (iSR === -1) for (var t3=0; t3<lower.length; t3++){ if (lower[t3].indexOf('supplier') !== -1 && lower[t3].indexOf('reference') !== -1) { iSR = t3; break; } }
+  if (iP === -1) for (var t4=0; t4<lower.length; t4++){ if (lower[t4].indexOf('part') !== -1) { iP = t4; break; } }
+  if (iQ === -1) for (var t5=0; t5<lower.length; t5++){ if (lower[t5].indexOf('inventory') !== -1 || lower[t5].indexOf('qty') !== -1) { iQ = t5; break; } }
+  if (iS === -1) for (var t6=0; t6<lower.length; t6++){ if (lower[t6].indexOf('sub') !== -1 || lower[t6].indexOf('sublocation') !== -1) { iS = t6; break; } }
 
-if (iDept === -1) for (var t=0; t<lower.length; t++){ if (lower[t].indexOf('dept') !== -1 || lower[t].indexOf('department') !== -1) { iDept = t; break; } }
-if (iW === -1) for (var t2=0; t2<lower.length; t2++){ if (lower[t2].indexOf('warehouse') !== -1) { iW = t2; break; } }
-if (iSR === -1) for (var t3=0; t3<lower.length; t3++){ if (lower[t3].indexOf('supplier') !== -1 && lower[t3].indexOf('reference') !== -1) { iSR = t3; break; } }
-if (iP === -1) for (var t4=0; t4<lower.length; t4++){ if (lower[t4].indexOf('part') !== -1) { iP = t4; break; } }
-if (iQ === -1) for (var t5=0; t5<lower.length; t5++){ if (lower[t5].indexOf('inventory') !== -1 || lower[t5].indexOf('qty') !== -1) { iQ = t5; break; } }
-if (iS === -1) for (var t6=0; t6<lower.length; t6++){ if (lower[t6].indexOf('sub') !== -1 || lower[t6].indexOf('sublocation') !== -1) { iS = t6; break; } }
+  if (iDept === -1 || iW === -1 || iSR === -1 || iP === -1 || iQ === -1 || iS === -1){
+    console.log('CSV header issue. Detected indexes:', {dept:iDept, ware:iW, src:iSR, part:iP, qty:iQ, sub:iS}, 'Headers:', headers);
+    alert('CSV headers not detected correctly. Check console for details.');
+    return [];
+  }
 
-if (iDept === -1 || iW === -1 || iSR === -1 || iP === -1 || iQ === -1 || iS === -1){
-console.log('CSV header issue. Detected indexes:', {dept:iDept, ware:iW, src:iSR, part:iP, qty:iQ, sub:iS}, 'Headers:', headers);
-alert('CSV headers not detected correctly. Check console for details.');
-return [];
-}
-
-var rows = [];
-for (var r = 1; r < cleaned.length; r++){
-var cols = parseCSVLine(cleaned[r]);
-var dept = cols[iDept] || '';
-var w = cols[iW] || '';
-var sr = cols[iSR] || '';
-var p = cols[iP] || '';
-var s = cols[iS] || '';
-var qRaw = cols[iQ] || '0';
-var q = parseInt(qRaw.toString().replace(/[^0-9.\-]/g, ''), 10);
-if (isNaN(q)) q = 0;
-rows.push({ dept: dept, warehouse: w, supplierRef: sr, part: p, sub: s, qty: q });
-}
-return rows;
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    var dept = cols[iDept] || '';
+    var w = cols[iW] || '';
+    var sr = cols[iSR] || '';
+    var p = cols[iP] || '';
+    var s = cols[iS] || '';
+    var qRaw = cols[iQ] || '0';
+    var q = parseInt(qRaw.toString().replace(/[^0-9.\-]/g, ''), 10);
+    if (isNaN(q)) q = 0;
+    rows.push({ dept: dept, warehouse: w, supplierRef: sr, part: p, sub: s, qty: q });
+  }
+  return rows;
 }
 
-function matchesQuery(value, query){
-var q = (query || '').toString().trim();
-if (q.length === 0) return true;
-var v = (value || '').toString().toLowerCase().trim();
-return v.indexOf(q.toLowerCase()) !== -1;
-}
-
+/* Render table with current filters (two search boxes) */
 function renderTable(){
-var partQuery = (searchBox.value || '').toString().trim();
-var supplierQuery = (supplierBox.value || '').toString().trim();
+  var partQuery = (searchBox ? searchBox.value || '' : '');
+  var supplierQuery = (supplierBox ? supplierBox.value || '' : '');
 
-var rows = [];
-for (var i = 0; i < allData.length; i++){
-var row = allData[i];
-if (!row) continue;
-if (row.qty <= 0) continue;
+  var rows = [];
+  for (var i = 0; i < allData.length; i++){
+    var row = allData[i];
+    if (!row) continue;
+    if (row.qty <= 0) continue;
 
-var partOK = matchesQuery(row.part, partQuery);
-var suppOK = matchesQuery(row.supplierRef, supplierQuery);
+    var partOK = true;
+    var suppOK = true;
+    if (partQuery.length > 0) partOK = (row.part || '').toLowerCase().includes(partQuery.toLowerCase());
+    if (supplierQuery.length > 0) suppOK = (row.supplierRef || '').toLowerCase().includes(supplierQuery.toLowerCase());
 
-if (partOK && suppOK){
-rows.push(row);
+    if (partOK && suppOK) rows.push(row);
+  }
+  filteredData = rows;
+
+  resultsTableBody.innerHTML = '';
+  for (var j = 0; j < rows.length; j++){
+    var r = rows[j];
+    var tr = document.createElement('tr');
+    tr.innerHTML = ''
+      + '<td>' + escapeHtml(r.dept) + '</td>'
+      + '<td>' + escapeHtml(r.warehouse) + '</td>'
+      + '<td>' + escapeHtml(r.supplierRef) + '</td>'
+      + '<td>' + escapeHtml(r.part) + '</td>'
+      + '<td>' + r.qty + '</td>'
+      + '<td>' + escapeHtml(r.sub) + '</td>';
+    resultsTableBody.appendChild(tr);
+  }
+
+  var noResults = document.getElementById('noResults');
+  noResults.style.display = (rows.length === 0) ? 'block' : 'none';
+  summary.textContent = 'Records: ' + rows.length;
+  status.textContent = ''; // clear any stale status
 }
-}
-filteredData = rows;
 
-resultsTableBody.innerHTML = '';
-for (var j = 0; j < rows.length; j++){
-var r = rows[j];
-var tr = document.createElement('tr');
-tr.innerHTML = ''
-+ '<td>' + escapeHtml(r.dept) + '</td>'
-+ '<td>' + escapeHtml(r.warehouse) + '</td>'
-+ '<td>' + escapeHtml(r.supplierRef) + '</td>'
-+ '<td>' + escapeHtml(r.part) + '</td>'
-+ '<td>' + r.qty + '</td>'
-+ '<td>' + escapeHtml(r.sub) + '</td>';
-resultsTableBody.appendChild(tr);
-}
-
-noResults.style.display = (rows.length === 0) ? 'block' : 'none';
-summary.textContent = 'Records: ' + rows.length;
-}
-
-/* CSV load (user-upload) */
+/* Load CSV from file (user override) */
 function loadCSVFile(file){
-if (!file) return;
-var reader = new FileReader();
-reader.onload = function(e){
-var text = e.target.result;
-var rows = parseCSV(text);
-if (rows.length > 0){
-allData = rows;
-renderTable();
-status.textContent = 'Loaded ' + rows.length + ' records from CSV';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(rows));
-localStorage.setItem(USER_OVERRIDE_KEY, 'true');
-// clear host preload flag since user overwrote
-localStorage.setItem(STORAGE_VERSION_KEY, APP_DATA_VERSION); // keep version in sync for future reloads
-} else {
-status.textContent = 'No valid rows found in CSV';
-allData = [];
-renderTable();
-}
-};
-reader.onerror = function(){
-status.textContent = 'Error reading CSV file';
-};
-reader.readAsText(file);
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = e.target.result;
+    var rows = parseCSV(text);
+    if (rows.length > 0){
+      allData = rows;
+      renderTable();
+      status.textContent = 'Loaded ' + rows.length + ' records from CSV';
+      localStorage.setItem(LAST_DATA_KEY, JSON.stringify(rows));
+      localStorage.setItem(USER_OVERRIDE_KEY, 'true');
+    } else {
+      status.textContent = 'No valid rows found in CSV';
+      allData = [];
+      renderTable();
+    }
+  };
+  reader.onerror = function(){
+    status.textContent = 'Error reading CSV file';
+  };
+  reader.readAsText(file);
 }
 
 /* Clear data (reset) */
 clearBtn.addEventListener('click', function(){
-allData = [];
-localStorage.removeItem(LAST_DATA_KEY);
-localStorage.removeItem(USER_OVERRIDE_KEY);
-renderTable();
-status.textContent = 'Data cleared';
+  allData = [];
+  localStorage.removeItem(LAST_DATA_KEY);
+  localStorage.removeItem(USER_OVERRIDE_KEY);
+  renderTable();
+  status.textContent = 'Data cleared';
+  localStorage.removeItem(STORAGE_VERSION_KEY);
 });
 
 /* File input (override) */
 fileInput.addEventListener('change', function(e){
-var file = e.target.files && e.target.files[0];
-if (file){
-loadCSVFile(file);
-}
+  var file = e.target.files && e.target.files[0];
+  if (file){
+    loadCSVFile(file);
+  }
 });
 
 /* Live search (two fields) */
-searchBox.addEventListener('input', function(){
-renderTable();
-});
-supplierBox.addEventListener('input', function(){
-renderTable();
-});
+if (searchBox) searchBox.addEventListener('input', function(){ renderTable(); });
+if (supplierBox) supplierBox.addEventListener('input', function(){ renderTable(); });
 
 /* Accent / theme persistence */
 function hexToRgba(hex, alpha){
-var r=0,g=0,b=0;
-if (hex.charAt(0) === '#') hex = hex.substring(1);
-if (hex.length === 3){
-r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
-g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
-b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
-} else if (hex.length === 6){
-r = parseInt(hex.substring(0,2), 16);
-g = parseInt(hex.substring(2,4), 16);
-b = parseInt(hex.substring(4,6), 16);
+  var r=0,g=0,b=0;
+  if (hex.charAt(0) === '#') hex = hex.substring(1);
+  if (hex.length === 3){
+    r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+    g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+    b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+  } else if (hex.length === 6){
+    r = parseInt(hex.substring(0,2), 16);
+    g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
+  }
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
-return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
-}
-
 accentColor.addEventListener('input', function(){
-document.documentElement.style.setProperty('--accent', accentColor.value);
-document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
-localStorage.setItem('sl_accent', accentColor.value);
+  document.documentElement.style.setProperty('--accent', accentColor.value);
+  document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
+  localStorage.setItem('sl_accent', accentColor.value);
 });
 
 // Theme toggle
 themeToggle.addEventListener('change', function(){
-if (themeToggle.checked){
-document.documentElement.setAttribute('data-theme', 'dark');
-} else {
-document.documentElement.removeAttribute('data-theme');
-}
-localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
-themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
+  if (themeToggle.checked){
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+  themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
 });
 
-/* Init: apply prefs and preload remote data when appropriate */
+/* Init + remote preload logic */
 (function init(){
-// Accent
-var savedAccent = localStorage.getItem('sl_accent');
-if (savedAccent){
-accentColor.value = savedAccent;
-document.documentElement.style.setProperty('--accent', savedAccent);
-document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
-}
+  // Apply saved prefs (accent/theme)
+  var savedAccent = localStorage.getItem('sl_accent');
+  if (savedAccent){
+    accentColor.value = savedAccent;
+    document.documentElement.style.setProperty('--accent', savedAccent);
+    document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
+  }
 
-// Theme
-var savedTheme = localStorage.getItem('sl_theme');
-if (savedTheme === 'dark'){
-themeToggle.checked = true;
-document.documentElement.setAttribute('data-theme', 'dark');
-} else if (savedTheme === 'light'){
-themeToggle.checked = false;
-document.documentElement.removeAttribute('data-theme');
-} else {
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
-themeToggle.checked = true;
-document.documentElement.setAttribute('data-theme', 'dark');
-}
-}
+  var savedTheme = localStorage.getItem('sl_theme');
+  if (savedTheme === 'dark'){
+    themeToggle.checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (savedTheme === 'light'){
+    themeToggle.checked = false;
+    document.documentElement.removeAttribute('data-theme');
+  }
 
-// Remote preload with per-device override
-var userOverride = localStorage.getItem(USER_OVERRIDE_KEY);
-if (userOverride === 'true'){
-// User already uploaded on this device
-var last = localStorage.getItem(LAST_DATA_KEY);
-if (last){
-try{ allData = JSON.parse(last); } catch(e){ allData = []; }
-} else {
-// fallback
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-}
-renderTable();
-status.textContent = 'Loaded your local override data';
-} else {
-// Try to fetch remote default CSV
-// First, try version endpoint (optional)
-var versionURL = REMOTE_VERSION_URL || '';
-var shouldFetchRemote = true;
+  // Ensure the search UI exists before attaching events
+  // Load remote data (or user override if exists)
+  var userOverride = localStorage.getItem(USER_OVERRIDE_KEY);
+  if (userOverride === 'true'){
+    // User has overridden on this device
+    var last = localStorage.getItem(LAST_DATA_KEY);
+    if (last){
+      try{ allData = JSON.parse(last); } catch(e){ allData = []; }
+    } else {
+      allData = [];
+    }
+    renderTable();
+    status.textContent = 'Loaded your local override data';
+  } else {
+    // No per-device override: fetch remote stocks.csv
+    fetch(REMOTE_CSV_URL, { cache: 'no-store' })
+      .then(function(res){
+        if (!res.ok) throw new Error('Remote fetch failed: ' + res.status);
+        return res.text();
+      })
+      .then(function(text){
+        var rows = parseCSV(text);
+        allData = rows.length ? rows : [];
+        renderTable();
+        status.textContent = 'Loaded stocks.csv from host';
+        localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+        localStorage.setItem(STORAGE_VERSION_KEY, APP_DATA_VERSION);
+      })
+      .catch(function(err){
+        console.error(err);
+        // Fallback: show a small demo data so UI remains usable
+        allData = [
+          { dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
+          { dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
+          { dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
+        ];
+        renderTable();
+        status.textContent = 'Remote load failed. Loaded sample data';
+        localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+      });
+  }
 
-if (versionURL){
-fetch(versionURL, { cache: 'no-store' })
-.then(function(res){ if (!res.ok) throw new Error('version fetch failed'); return res.json(); })
-.then(function(ver){
-var remoteVersion = (ver && ver.version) ? ver.version : '';
-var storedVer = localStorage.getItem(STORAGE_VERSION_KEY);
-if (storedVer && remoteVersion && storedVer === remoteVersion){
-// Use saved data if present
-var saved = localStorage.getItem(LAST_DATA_KEY);
-if (saved){
-try{ allData = JSON.parse(saved); renderTable(); status.textContent = 'Loaded saved data'; }
-catch(e){ /* fall back below */ }
-}
-} else {
-// fetch remote CSV
-fetch(REMOTE_CSV_URL, { cache: 'no-store' })
-.then(r => r.text())
-.then(text => {
-var rows = parseCSV(text);
-allData = rows.length ? rows : [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Loaded remote default stocks.csv';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-localStorage.setItem(STORAGE_VERSION_KEY, remoteVersion);
-})
-.catch(function(){
-// fallback
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Remote load failed. Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-});
-}
-}).catch(function(){
-// version fetch failed; try to fetch CSV directly
-fetch(REMOTE_CSV_URL, { cache: 'no-store' })
-.then(r => r.text())
-.then(text => {
-var rows = parseCSV(text);
-allData = rows.length ? rows : [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Loaded remote default stocks.csv (fallback)';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-})
-.catch(function(){
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Remote load failed. Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-});
-});
-} else {
-// No version URL; do a direct remote fetch if possible
-fetch(REMOTE_CSV_URL, { cache: 'no-store' })
-.then(r => r.text())
-.then(text => {
-var rows = parseCSV(text);
-allData = rows.length ? rows : [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Loaded remote default stocks.csv';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-})
-.catch(function(){
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Remote load failed. Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-});
-}
-}
-
-// Scanner hidden by default
-scannerOverlay.style.display = 'none';
+  // Show scanner overlay hidden by default
+  scannerOverlay.style.display = 'none';
 })();
 
-// Scanner (click-to-use)
-var detector;
-var streamActive = false;
+// Barcode scanner (basic)
 var videoStream = null;
+var detector = null;
+var streamActive = false;
+var lastDetectedCode = '';
 scanBtn.addEventListener('click', function(){
-if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
-alert('Camera access is not supported in this browser.');
-return;
-}
+  if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
+    alert('Camera access is not supported in this browser.');
+    return;
+  }
 
-scannerOverlay.style.display = 'flex';
-navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-.then(function(stream){
-videoStream = stream;
-scannerVideo.srcObject = stream;
-scannerVideo.play();
-streamActive = true;
-lastDetectedCode = '';
-useCodeBtn.style.display = 'none';
+  scannerOverlay.style.display = 'flex';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream){
+      videoStream = stream;
+      scannerVideo.srcObject = stream;
+      scannerVideo.play();
+      streamActive = true;
+      lastDetectedCode = '';
+      useCodeBtn.style.display = 'none';
 
-if ('BarcodeDetector' in window){
-detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','qr_code'] });
-var canvas = document.createElement('canvas');
-var ctx = canvas.getContext('2d');
-canvas.width = 640; canvas.height = 480;
+      if ('BarcodeDetector' in window){
+        detector = new BarcodeDetector({ formats: ['code_128','ean_13','ean_8','upc_a','upc_e','qr_code'] });
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        canvas.width = 640; canvas.height = 480;
 
-function tick(){
-if (!streamActive) return;
-try{
-ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
-detector.detect(canvas)
-.then(barcodes => {
-if (barcodes && barcodes.length > 0){
-var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
-if (code){
-lastDetectedCode = code;
-useCodeBtn.style.display = 'block';
-}
-}
-requestAnimationFrame(tick);
-})
-.catch(function(){ requestAnimationFrame(tick); });
-} catch(err){
-requestAnimationFrame(tick);
-}
-}
-requestAnimationFrame(tick);
-} else {
-alert('Barcode scanning not supported in this browser. You can type a value into the search box.');
-}
-})
-.catch(function(err){
-console.error(err);
-alert('Unable to access camera. Please allow camera permissions.');
-stopScanner();
+        function tick(){
+          if (!streamActive) return;
+          try{
+            ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
+            detector.detect(canvas)
+              .then(barcodes => {
+                if (barcodes && barcodes.length > 0){
+                  var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
+                  if (code){
+                    lastDetectedCode = code;
+                    useCodeBtn.style.display = 'block';
+                  }
+                }
+                requestAnimationFrame(tick);
+              })
+              .catch(function(){ requestAnimationFrame(tick); });
+          } catch(err){
+            requestAnimationFrame(tick);
+          }
+        }
+        requestAnimationFrame(tick);
+      } else {
+        alert('Barcode scanning not supported in this browser. You can type a value into the search box.');
+      }
+    })
+    .catch(function(err){
+      console.error(err);
+      alert('Unable to access camera. Please allow camera permissions.');
+      stopScanner();
+    });
 });
-});
 
-// Use this code (apply after scan)
+// Use this code (after scan)
 useCodeBtn.addEventListener('click', function(){
-if (typeof lastDetectedCode === 'string' && lastDetectedCode.length > 0){
-// Put the code into the first search field as a simple flow
-var el = document.getElementById('searchBox');
-if (el){
-el.value = lastDetectedCode;
-renderTable();
-}
-stopScanner();
-}
+  if (lastDetectedCode){
+    if (searchBox){
+      searchBox.value = lastDetectedCode;
+      renderTable();
+    } else {
+      status.textContent = 'Detected code: ' + lastDetectedCode;
+    }
+    stopScanner();
+  }
 });
 
 // Close scanner
 scannerClose.addEventListener('click', function(){
-stopScanner();
+  stopScanner();
 });
 
 // Stop scanner
 function stopScanner(){
-streamActive = false;
-if (videoStream){
-videoStream.getTracks().forEach(function(t){ t.stop(); });
-}
-videoStream = null;
-scannerVideo.srcObject = null;
-scannerOverlay.style.display = 'none';
-useCodeBtn.style.display = 'none';
-lastDetectedCode = '';
+  streamActive = false;
+  if (videoStream){
+    videoStream.getTracks().forEach(function(t){ t.stop(); });
+  }
+  videoStream = null;
+  scannerVideo.srcObject = null;
+  scannerOverlay.style.display = 'none';
+  useCodeBtn.style.display = 'none';
+  lastDetectedCode = '';
 }
 
 // Click outside to close
 scannerOverlay.addEventListener('click', function(e){
-if (e.target === scannerOverlay){
-stopScanner();
-}
+  if (e.target === scannerOverlay){
+    stopScanner();
+  }
 });
 
 // Load sample
 loadSampleBtn.addEventListener('click', function(){
-allData = [
-{ dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
-{ dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
-{ dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
-];
-renderTable();
-status.textContent = 'Loaded sample data';
-localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
-localStorage.setItem(USER_OVERRIDE_KEY, 'true');
+  allData = [
+    { dept: '01', warehouse: 'WH-A', supplierRef: 'SUP-001', part: 'PKG-1001', sub: 'LOC-01', qty: 5 },
+    { dept: '02', warehouse: 'WH-B', supplierRef: 'SUP-002', part: 'PKG-2002', sub: 'LOC-02', qty: 3 },
+    { dept: '03', warehouse: 'WH-C', supplierRef: 'SUP-003', part: 'PKG-3003', sub: 'LOC-03', qty: 8 }
+  ];
+  renderTable();
+  status.textContent = 'Loaded sample data';
+  localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+  localStorage.setItem(USER_OVERRIDE_KEY, 'true'); // reflect user-override state
 });
-
-/* End of script */
 </script>
 
 </body>
