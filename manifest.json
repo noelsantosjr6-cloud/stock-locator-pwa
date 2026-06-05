@@ -1,24 +1,17 @@
 {
-"name": "Stock Locator",
-"short_name": "Stock Locator",
-"description": "CSV stock locator with 6-column import and two-field search. PWAs.",
-"start_url": "./index.html",
-"scope": "./",
-"display": "standalone",
-"background_color": "#f5f5f5",
-"theme_color": "#2e8b57",
-"orientation": "any",
-"icons": [
-{
-"src": "icons/icon-192.png",
-"sizes": "192x192",
-"type": "image/png"
-},
-{
-"src": "icons/icon-512.png",
-"sizes": "512x512",
-"type": "image/png"
-}
-],
-"prefer_related_applications": false
+  "short_name": "Stock Locator",
+  "name": "Stock Locator Inventory App",
+  "icons": [
+    {
+      "src": "search192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2e8b57",
+  "display": "standalone",
+  "orientation": "portrait"
 }
