@@ -33,7 +33,7 @@
 html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-/* Updated Fluid 3-Column Header Bar Layout */
+/* Header Bar Layout */
 header { 
   padding: 14px 16px; 
   background: var(--panel); 
@@ -46,13 +46,14 @@ header {
 }
 .header-left {
   display: flex; 
-  gap: 8px; 
+  gap: 10px; 
   align-items: center; 
   justify-content: flex-start;
-  flex: 1;
+  flex: 1.2;
   min-width: 0;
 }
-header img.app-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+/* Desktop left app icon size */
+header img.app-icon { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
 header strong { 
   font-size: 16px; 
   white-space: nowrap; 
@@ -68,7 +69,6 @@ header strong {
   flex-shrink: 0;
   padding: 0 4px;
 }
-/* Slightly adjusted base size for the new logo */
 .company-logo {
   height: 36px; 
   width: auto;
@@ -135,32 +135,64 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   border-color: #534114;
 }
 
+/* Fullscreen Scanner Overlay Layout */
+#scannerOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+}
+#scannerBox {
+  width: 100%;
+  max-width: 500px;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--accent);
+}
+#scannerVideo {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+#scannerClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #b22222;
+  z-index: 10000;
+}
+
 /* MOBILE RESPONSIVE BLOCKS */
 @media (max-width: 700px){
   main{ padding:8px }
   input[type="text"]{ max-width: 100%; }
   
-  /* Mobile Adjustments to shift the logo right and boost its size */
-  header { padding: 10px 8px; min-height: 54px; gap: 6px; }
-  .header-left { max-width: 45%; } /* Limits title width to push layout and logo safely to the right */
-  header img.app-icon { width: 18px; height: 18px; }
+  /* Mobile Header Configuration */
+  header { padding: 10px 8px; min-height: 56px; gap: 8px; }
+  
+  /* Shifted layout constraints to allow a wider title block area */
+  .header-left { max-width: 52%; gap: 8px; } 
+  
+  /* 🚀 INCREASED SIZE: Boosted the app locator icon from 18px to 28px on mobile */
+  header img.app-icon { width: 28px; height: 28px; }
   header strong { font-size: 11px; font-weight: 700; }
   
-  /* Scaled up the new square logo specifically for mobile views */
+  /* Center square logo setup */
   .company-logo { height: 28px; } 
-  .company-logo-container { padding-left: 10px; } /* Micro-nudge space to shift right */
+  .company-logo-container { padding-left: 6px; } 
   
   #clearBtn { padding: 6px 8px; font-size: 10px; }
   
-  /* Force the table to stop acting like a table layout on mobile */
+  /* Responsive Table Modifiers */
   table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
     display: block; 
   }
-  
-  /* Hide table headers completely on mobile */
   table.resultsTable thead tr { position: absolute; top: -9999px; left: -9999px; }
-  
-  /* Turn each row into an independent card */
   table.resultsTable tr {
     background: var(--card);
     border: 1px solid #ccc;
@@ -169,8 +201,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     padding: 10px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
-  
-  /* Style each cell like a labeled data row with structural alignment fixes */
   table.resultsTable td {
     border: none;
     padding: 6px 4px;
@@ -184,8 +214,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     display: block;
     text-align: left;
   }
-  
-  /* Dynamically insert the column names using CSS data-labels */
   table.resultsTable td:before {
     position: absolute;
     top: 6px;
@@ -196,8 +224,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     font-weight: bold;
     color: var(--muted);
   }
-  
-  /* Label assignments */
   table.resultsTable td:nth-of-type(1):before { content: "Dept:"; }
   table.resultsTable td:nth-of-type(2):before { content: "Warehouse:"; }
   table.resultsTable td:nth-of-type(3):before { content: "Supplier Ref:"; }
@@ -205,7 +231,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   table.resultsTable td:nth-of-type(5):before { content: "Inventory:"; }
   table.resultsTable td:nth-of-type(6):before { content: "SubLocation:"; }
   
-  /* Make the Part Number field visually pop out */
   table.resultsTable td:nth-of-type(4) {
     font-weight: bold;
     font-size: 15px;
@@ -222,7 +247,7 @@ input:focus{ border-color: var(--accent); }
 <body>
 
 <header>
-  <!-- Column 1: Left Title Block -->
+  <!-- Column 1: Left Title Block with Bigger App Icon -->
   <div class="header-left">
     <img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
     <strong>Warehouse Stock Locator</strong>
@@ -303,7 +328,7 @@ input:focus{ border-color: var(--accent); }
 
 <div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
 <div id="scannerBox" style="position:relative;">
- <button id="scannerClose" title="Close scanner" style="position:absolute; top:6px; right:6px; z-index:2;">Close</button>
+ <button id="scannerClose" class="danger" title="Close scanner">Close</button>
  <video id="scannerVideo" autoplay playsinline></video>
 </div>
 </div>
@@ -628,73 +653,94 @@ function loadBackupData() {
   }
 }
 
-/* Fast Automatic Routing Scanner Configuration */
-var detector;
+/* 🛠️ ROBUST MODERNIZE SCANNER HOOKS 🛠️ */
+var detector = null;
 var streamActive = false;
 var videoStream = null;
 
 scanQrBtn.addEventListener('click', function(){
   activeScanTarget = 'part';
-  startScannerEngine(['qr_code']);
+  initiateCameraStream(['qr_code']);
 });
 
 scanBarBtn.addEventListener('click', function(){
   activeScanTarget = 'supplier';
-  startScannerEngine(['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e']);
+  initiateCameraStream(['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e']);
 });
 
-function startScannerEngine(allowedFormats) {
-  if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia){
-    alert('Camera access is not supported in this browser.');
+// Clean modern asynchronous promise implementation to handle hardware lockouts safely
+async function initiateCameraStream(allowedFormats) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Camera API hardware access is missing or blocked by your browser security configuration. Please ensure you are loading via safe HTTPS.');
     return;
   }
   
   isProcessingScan = false;
   scannerOverlay.style.display = 'flex';
   
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-    .then(function(stream){
-      videoStream = stream;
-      scannerVideo.srcObject = stream;
-      scannerVideo.play();
-      streamActive = true;
+  var constraints = {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: false
+  };
 
-      if ('BarcodeDetector' in window){
-        detector = new BarcodeDetector({ formats: allowedFormats });
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        canvas.width = 640; canvas.height = 480;
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia(constraints);
+    videoStream = stream;
+    scannerVideo.srcObject = stream;
+    
+    // Explicit modern play promise checking to handle race-conditions on mobile browsers
+    await scannerVideo.play();
+    streamActive = true;
 
-        function tick(){
-          if (!streamActive || isProcessingScan) return;
-          try{
+    if ('BarcodeDetector' in window) {
+      detector = new BarcodeDetector({ formats: allowedFormats });
+      var canvas = document.createElement('canvas');
+      var ctx = canvas.getContext('2d');
+      
+      // Auto-scale canvas tracking variables to match streaming input resolution
+      canvas.width = 640; 
+      canvas.height = 480;
+
+      function executionTick() {
+        if (!streamActive || isProcessingScan) return;
+        try {
+          if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
             ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
             detector.detect(canvas)
               .then(barcodes => {
-                if (barcodes && barcodes.length > 0 && !isProcessingScan){
-                  var code = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
-                  if (code && code.trim().length > 0){
+                if (barcodes && barcodes.length > 0 && !isProcessingScan) {
+                  var dataValue = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
+                  if (dataValue && dataValue.trim().length > 0) {
                     isProcessingScan = true;
-                    handleInstantScanResult(code);
+                    handleInstantScanResult(dataValue);
                     return; 
                   }
                 }
-                if (!isProcessingScan) requestAnimationFrame(tick);
+                if (!isProcessingScan) requestAnimationFrame(executionTick);
               })
-              .catch(function(){ if (!isProcessingScan) requestAnimationFrame(tick); });
-          } catch(err){
-            if (!isProcessingScan) requestAnimationFrame(tick);
+              .catch(() => { 
+                if (!isProcessingScan) requestAnimationFrame(executionTick); 
+              });
+          } else {
+            if (!isProcessingScan) requestAnimationFrame(executionTick);
           }
+        } catch(err) {
+          if (!isProcessingScan) requestAnimationFrame(executionTick);
         }
-        requestAnimationFrame(tick);
-      } else {
-        alert('Native BarcodeDetector API not found. Please type manually or ensure HTTPS access.');
       }
-    })
-    .catch(function(err){
-      alert('Unable to access camera.');
-      stopScanner();
-    });
+      requestAnimationFrame(executionTick);
+    } else {
+      alert('Native BarcodeDetector framework missing. Ensure experimental Web Platform Features are turned on in flag settings or use standard chrome mobile channels.');
+    }
+  } catch (error) {
+    console.error('Camera initialization error details:', error);
+    alert('Camera Access Denied: Please check your phone settings app and grant browser access permission to use the camera hardware layout.');
+    stopScanner();
+  }
 }
 
 function handleInstantScanResult(rawCode) {
@@ -714,7 +760,9 @@ scannerClose.addEventListener('click', stopScanner);
 function stopScanner(){
   streamActive = false;
   isProcessingScan = true;
-  if (videoStream){ videoStream.getTracks().forEach(function(t){ t.stop(); }); }
+  if (videoStream){ 
+    videoStream.getTracks().forEach(function(track){ track.stop(); }); 
+  }
   videoStream = null;
   scannerVideo.srcObject = null;
   scannerOverlay.style.display = 'none';
