@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Warehouse Stock Locator - Remote preload (mobile-friendly, 6-column)</title>
 
+<!-- PWA Web Manifest & iOS Web App Meta Tags -->
 <link rel="manifest" href="manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -32,17 +33,18 @@
 html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-/* Grid layout splitting the header cleanly into 3 equal columns */
-header{ 
-  padding:12px 14px; 
+/* Strict Side-by-Side Horizontal Grid Layout for PC & Mobile View */
+header { 
+  padding: 12px 14px; 
   background: var(--panel); 
-  border-bottom:1px solid var(--accent); 
+  border-bottom: 1px solid var(--accent); 
   display: grid; 
   grid-template-columns: 1fr auto 1fr; 
   align-items: center; 
+  gap: 8px;
 }
 header img.app-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
-header strong{ font-size:16px; white-space: nowrap; }
+header strong { font-size: 16px; white-space: nowrap; }
 
 /* Centered Company Logo Rules */
 .company-logo-container {
@@ -111,14 +113,12 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   main{ padding:8px }
   input[type="text"]{ max-width: 100%; }
   
-  /* Stack header items into independent layers on tight screens */
-  header {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    justify-items: center;
-    text-align: center;
-  }
-  header div { justify-content: center !important; }
+  /* Optimize Header elements scaling on tiny displays without splitting lines */
+  header { padding: 8px 6px; gap: 4px; }
+  header img.app-icon { width: 20px; height: 20px; }
+  header strong { font-size: 12px; }
+  .company-logo { height: 22px; }
+  #clearBtn { padding: 6px 8px; font-size: 10px; }
   
   /* Force the table to stop acting like a table layout on mobile */
   table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
@@ -190,18 +190,20 @@ input:focus{ border-color: var(--accent); }
 <body>
 
 <header>
-  <div style="display: flex; gap: 10px; align-items: center;">
+  <!-- Column 1: Left-aligned Brand Info Text Title -->
+  <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-start;">
     <img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
     <strong>Warehouse Stock Locator</strong>
   </div>
 
+  <!-- Column 2: Permanently Centered Mesco Corporate Logo Box -->
   <div class="company-logo-container">
     <img src="logo.png" alt="Company Logo" class="company-logo" onerror="this.style.display='none';" />
   </div>
 
+  <!-- Column 3: Right-aligned Clear Cache Control Action Button -->
   <div style="display: flex; justify-content: flex-end; align-items: center;">
-    <div class="muted" style="padding-right:8px"></div>
-    <button id="clearBtn" class="danger" title="Clear cached data" style="padding: 8px 12px; font-size:13px;">Clear App Cache</button>
+    <button id="clearBtn" class="danger" title="Clear cached data">Clear App Cache</button>
   </div>
 </header>
 
@@ -262,6 +264,7 @@ input:focus{ border-color: var(--accent); }
  </table>
 </div>
 
+<!-- Clear warning callout instead of broken structural items container lines -->
 <div id="noResultsAlert" class="alertBox">❌ No matching item found in current stock registry.</div>
 <div id="summary" class="muted" style="margin-top:6px"></div>
 </section>
@@ -384,6 +387,7 @@ function matchesQuery(value, query){
   return v.indexOf(q.toLowerCase()) !== -1;
 }
 
+// Fixed function for reliable highlighting matching patterns
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -416,7 +420,7 @@ function renderTable(){
   }
   filteredData = rows;
 
-  // Zero-results management handling logic
+  // Clear zero items list cards completely out of view container
   if (rows.length === 0) {
     resultsTableBody.innerHTML = '';
     tableWrapContainer.style.display = 'none';
@@ -595,7 +599,7 @@ function loadBackupData() {
   }
 }
 
-/* Fast Automatic QR/Barcode Routing Framework */
+/* Fast Automatic Routing Scanner Configuration */
 var detector;
 var streamActive = false;
 var videoStream = null;
