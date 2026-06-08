@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Stock Locator - Remote preload (mobile-friendly, 6-column)</title>
+<title>Warehouse Stock Locator - Remote preload (mobile-friendly, 6-column)</title>
 
 <link rel="manifest" href="manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Stock Locator" />
-<link rel="apple-touch-icon" href="search192.png" />
+<link class="apple-touch-icon" href="search192.png" />
 
 <style>
 :root{
@@ -31,9 +31,30 @@
 *{box-sizing:border-box}
 html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
-header{ padding:12px 14px; background: var(--panel); border-bottom:1px solid var(--accent); display:flex; gap:10px; align-items:center }
+
+/* Grid layout splitting the header cleanly into 3 equal columns */
+header{ 
+  padding:12px 14px; 
+  background: var(--panel); 
+  border-bottom:1px solid var(--accent); 
+  display: grid; 
+  grid-template-columns: 1fr auto 1fr; 
+  align-items: center; 
+}
 header img.app-icon { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
-header strong{ font-size:16px }
+header strong{ font-size:16px; white-space: nowrap; }
+
+/* Centered Company Logo Rules */
+.company-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.company-logo {
+  height: 32px; 
+  object-fit: contain;
+}
+
 main{ padding:14px }
 .card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
 .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
@@ -89,6 +110,15 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 @media (max-width: 700px){
   main{ padding:8px }
   input[type="text"]{ max-width: 100%; }
+  
+  /* Stack header items into independent layers on tight screens */
+  header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    justify-items: center;
+    text-align: center;
+  }
+  header div { justify-content: center !important; }
   
   /* Force the table to stop acting like a table layout on mobile */
   table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
@@ -160,10 +190,19 @@ input:focus{ border-color: var(--accent); }
 <body>
 
 <header>
-<img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
-<strong>Stock Locator</strong>
-<div class="muted" style="margin-left:auto; padding-right:8px"></div>
-<button id="clearBtn" class="danger" title="Clear cached data" style="margin-left:8px; padding: 8px 12px; font-size:13px;">Clear App Cache</button>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
+    <strong>Warehouse Stock Locator</strong>
+  </div>
+
+  <div class="company-logo-container">
+    <img src="logo.png" alt="Company Logo" class="company-logo" onerror="this.style.display='none';" />
+  </div>
+
+  <div style="display: flex; justify-content: flex-end; align-items: center;">
+    <div class="muted" style="padding-right:8px"></div>
+    <button id="clearBtn" class="danger" title="Clear cached data" style="padding: 8px 12px; font-size:13px;">Clear App Cache</button>
+  </div>
 </header>
 
 <main>
@@ -377,7 +416,7 @@ function renderTable(){
   }
   filteredData = rows;
 
-  // If absolutely no lines found, completely wipe out old cards and display the notification box
+  // Zero-results management handling logic
   if (rows.length === 0) {
     resultsTableBody.innerHTML = '';
     tableWrapContainer.style.display = 'none';
@@ -386,7 +425,6 @@ function renderTable(){
     return;
   }
 
-  // If matches exist, make sure the layout is active and hidden warning banner is muted
   tableWrapContainer.style.display = 'block';
   noResultsAlert.style.display = 'none';
 
@@ -455,6 +493,7 @@ function hexToRgba(hex, alpha){
   } else if (hex.length === 6){
     r = parseInt(hex.substring(0,2), 16);
     g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
   }
   return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 }
@@ -556,7 +595,7 @@ function loadBackupData() {
   }
 }
 
-/* Instant-Response Scanner Engine Configuration */
+/* Fast Automatic QR/Barcode Routing Framework */
 var detector;
 var streamActive = false;
 var videoStream = null;
