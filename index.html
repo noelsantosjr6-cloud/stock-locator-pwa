@@ -34,7 +34,6 @@
 html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-/* Cleaned Aligned Header Bar Layout */
 header { 
   padding: 10px 16px; 
   background: var(--panel); 
@@ -100,7 +99,6 @@ mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3p
 .scanGrid button { flex: 1; font-size: 13px; padding: 12px 6px; line-height: 1.2; text-align: center; }
 .statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
 
-/* 7-Column Desktop Table Setup */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
 table.resultsTable th, table.resultsTable td { border: 1px solid #ddd; padding: 10px 8px; text-align: left; }
@@ -126,7 +124,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   border-color: #534114;
 }
 
-/* Hardcoded Target Overlay Sizing */
 #scannerOverlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -165,7 +162,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   object-fit: cover !important;
 }
 
-/* MOBILE RESPONSIVE BLOCKS */
 @media (max-width: 700px){
   main{ padding:8px }
   input[type="text"]{ max-width: 100%; }
@@ -215,7 +211,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
     color: var(--muted);
   }
   
-  /* Adaptive 7-column card mappings */
   table.resultsTable td:nth-of-type(1):before { content: "Dept:"; }
   table.resultsTable td:nth-of-type(2):before { content: "Supplier Ref:"; }
   table.resultsTable td:nth-of-type(3):before { content: "Warehouse:"; }
@@ -364,6 +359,28 @@ function escapeHtml(text){
     .replace(/'/g, '&#39;');
 }
 
+// RESTORED MISSING METHOD: Reads raw CSV strings accurately handling comma breaks
+function parseCSVLine(line){
+  var res = [];
+  var cur = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++){
+    var ch = line[i];
+    if (inQuotes){
+      if (ch === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === '"'){ inQuotes = true; }
+      else if (ch === ','){ res.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  res.push(cur);
+  return res;
+}
+
+// CLEANED UNIFIED PARSER: Locked strictly down to match the physical 7 columns order
 function parseCSV(text){
   var lines = text.split(/\r?\n/);
   var cleaned = [];
@@ -373,7 +390,6 @@ function parseCSV(text){
   }
   if (cleaned.length < 2) return [];
 
-  // Forced absolute positioning based exactly on your physical Excel layout
   var iDept = 0;
   var iSR = 1;
   var iW = 2;
@@ -381,85 +397,6 @@ function parseCSV(text){
   var iQ = 4;
   var iS = 5;
   var iItem = 6;
-
-  var rows = [];
-  for (var r = 1; r < cleaned.length; r++){
-    var cols = parseCSVLine(cleaned[r]);
-    if(cols.length <= 1) continue;
-    
-    var qRaw = cols[iQ] || '0';
-    var q = parseFloat(qRaw.toString().replace(/[^0-9.\-]/g, ''));
-    if (isNaN(q)) q = 0;
-    
-    rows.push({
-      dept: cols[iDept] || '',
-      supplierRef: cols[iSR] || '',
-      warehouse: cols[iW] || '',
-      part: cols[iP] || '',
-      sub: cols[iS] || '',
-      itemNo: cols[iItem] ? cols[iItem].toString().trim() : '',
-      qty: q
-    });
-  }
-  return rows;
-}
-
-function parseCSV(text){
-  var lines = text.split(/\r?\n/);
-  var cleaned = [];
-  for (var i = 0; i < lines.length; i++){
-    var l = lines[i];
-    if (l && l.trim().length > 0) cleaned.push(l);
-  }
-  if (cleaned.length < 2) return [];
-
-  var headers = parseCSVLine(cleaned[0]);
-  // Clean headers: lowercase and completely remove spaces/underscores for perfect matching
-  var lower = headers.map(h => (h || '').toString().toLowerCase().replace(/[\s_]/g, '').trim());
-  
-  var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1, iItem = -1;
-  
-  for (var k = 0; k < lower.length; k++){
-    var h = lower[k];
-    if (h === 'dept') iDept = k;
-    if (h === 'supplierreference' || h === 'supplierref') iSR = k;
-    if (h === 'warehouse') iW = k;
-    if (h === 'partnumber' || h === 'partno') iP = k;
-    if (h === 'physicalinventory' || h === 'qty' || h === 'inventory') iQ = k;
-    if (h === 'sublocation') iS = k;
-    if (h === 'itemnumber' || h === 'itemno') iItem = k;
-  }
-
-  // Strict structural fallbacks based exactly on your 7-column layout order if matching fails
-  if (iDept === -1) iDept = 0;
-  if (iSR === -1) iSR = 1;
-  if (iW === -1) iW = 2;
-  if (iP === -1) iP = 3;
-  if (iQ === -1) iQ = 4;
-  if (iS === -1) iS = 5;
-  if (iItem === -1) iItem = 6;
-
-  var rows = [];
-  for (var r = 1; r < cleaned.length; r++){
-    var cols = parseCSVLine(cleaned[r]);
-    if(cols.length <= 1) continue;
-    
-    var qRaw = cols[iQ] || '0';
-    var q = parseFloat(qRaw.toString().replace(/[^0-9.\-]/g, ''));
-    if (isNaN(q)) q = 0;
-    
-    rows.push({
-      dept: cols[iDept] || '',
-      supplierRef: cols[iSR] || '',
-      warehouse: cols[iW] || '',
-      part: cols[iP] || '',
-      sub: cols[iS] || '',
-      itemNo: (cols[iItem] || '').toString().trim(),
-      qty: q
-    });
-  }
-  return rows;
-}
 
   var rows = [];
   for (var r = 1; r < cleaned.length; r++){
@@ -476,7 +413,7 @@ function parseCSV(text){
       warehouse: cols[iW] || '',
       part: cols[iP] || '',
       sub: cols[iS] || '',
-      itemNo: iItem !== -1 ? (cols[iItem] || '').toString().trim() : '',
+      itemNo: cols[iItem] ? cols[iItem].toString().trim() : '',
       qty: q
     });
   }
@@ -644,6 +581,22 @@ function getFormattedDate() {
   return month + ' ' + day + ', ' + hours + ':' + minutes + ' ' + ampm;
 }
 
+function loadBackupData() {
+  var last = localStorage.getItem(LAST_DATA_KEY);
+  var lastTime = localStorage.getItem(LAST_TIME_KEY);
+  if (last){ 
+    try { 
+      allData = JSON.parse(last); 
+      renderTable();
+      if(lastTime) {
+        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
+      }
+    } catch(e) { 
+      allData = []; 
+    } 
+  }
+}
+
 (function init(){
   var savedAccent = localStorage.getItem('sl_accent');
   if (savedAccent){
@@ -687,29 +640,14 @@ function getFormattedDate() {
         loadBackupData();
       }
     })
-    .catch(function(){
+    .catch(function(err){
+      console.error(err);
       status.textContent = 'Offline Mode. Loading backup...';
       loadBackupData();
     });
 
   scannerOverlay.style.display = 'none';
 })();
-
-function loadBackupData() {
-  var last = localStorage.getItem(LAST_DATA_KEY);
-  var lastTime = localStorage.getItem(LAST_TIME_KEY);
-  if (last){ 
-    try { 
-      allData = JSON.parse(last); 
-      renderTable();
-      if(lastTime) {
-        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
-      }
-    } catch(e) { 
-      allData = []; 
-    } 
-  }
-}
 
 /* SCANNER CONFIGURATION */
 scanQrBtn.addEventListener('click', function(){
@@ -748,20 +686,16 @@ function startUniversalScanner(targetFormats) {
     function onScanSuccess(decodedText) {
       if (decodedText) {
         var cleanCode = decodedText.toString().trim();
-        
         if (activeScanTarget === 'part') {
           searchBox.value = cleanCode;
         } else {
           supplierBox.value = cleanCode;
         }
-        
         renderTable();
         stopUniversalScanner();
       }
     },
-    function onScanFailure(error) {
-      // Loop scan
-    }
+    function onScanFailure(error) {}
   ).catch(err => {
     console.error("Camera startup error:", err);
     alert("Camera Access Error: Ensure you give the site camera permission.");
@@ -789,6 +723,5 @@ function stopUniversalScanner() {
 
 scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopUniversalScanner(); });
 </script>
-
 </body>
 </html>
