@@ -364,24 +364,44 @@ function escapeHtml(text){
     .replace(/'/g, '&#39;');
 }
 
-function parseCSVLine(line){
-  var res = [];
-  var cur = '';
-  var inQuotes = false;
-  for (var i = 0; i < line.length; i++){
-    var ch = line[i];
-    if (inQuotes){
-      if (ch === '"'){
-        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
-      } else { cur += ch; }
-    } else {
-      if (ch === '"'){ inQuotes = true; }
-      else if (ch === ','){ res.push(cur); cur = ''; }
-      else { cur += ch; }
-    }
+function parseCSV(text){
+  var lines = text.split(/\r?\n/);
+  var cleaned = [];
+  for (var i = 0; i < lines.length; i++){
+    var l = lines[i];
+    if (l && l.trim().length > 0) cleaned.push(l);
   }
-  res.push(cur);
-  return res;
+  if (cleaned.length < 2) return [];
+
+  // Forced absolute positioning based exactly on your physical Excel layout
+  var iDept = 0;
+  var iSR = 1;
+  var iW = 2;
+  var iP = 3;
+  var iQ = 4;
+  var iS = 5;
+  var iItem = 6;
+
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    if(cols.length <= 1) continue;
+    
+    var qRaw = cols[iQ] || '0';
+    var q = parseFloat(qRaw.toString().replace(/[^0-9.\-]/g, ''));
+    if (isNaN(q)) q = 0;
+    
+    rows.push({
+      dept: cols[iDept] || '',
+      supplierRef: cols[iSR] || '',
+      warehouse: cols[iW] || '',
+      part: cols[iP] || '',
+      sub: cols[iS] || '',
+      itemNo: cols[iItem] ? cols[iItem].toString().trim() : '',
+      qty: q
+    });
+  }
+  return rows;
 }
 
 function parseCSV(text){
