@@ -394,20 +394,52 @@ function parseCSV(text){
   if (cleaned.length < 2) return [];
 
   var headers = parseCSVLine(cleaned[0]);
-  var lower = headers.map(h => (h || '').toString().toLowerCase().trim());
+  // Clean headers: lowercase and completely remove spaces/underscores for perfect matching
+  var lower = headers.map(h => (h || '').toString().toLowerCase().replace(/[\s_]/g, '').trim());
   
-  // Custom header string parsing mapping for the 7 columns layout
   var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1, iItem = -1;
+  
   for (var k = 0; k < lower.length; k++){
     var h = lower[k];
-    if (iDept === -1 && h === 'dept') iDept = k;
-    if (iSR === -1 && (h.indexOf('supplier') !== -1 || h.indexOf('ref') !== -1)) iSR = k;
-    if (iW === -1 && h.indexOf('warehouse') !== -1) iW = k;
-    if (iP === -1 && h.indexOf('part') !== -1) iP = k;
-    if (iQ === -1 && (h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
-    if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('location') !== -1)) iS = k;
-    if (iItem === -1 && (h.indexOf('item') !== -1 || h.indexOf('number') !== -1)) iItem = k;
+    if (h === 'dept') iDept = k;
+    if (h === 'supplierreference' || h === 'supplierref') iSR = k;
+    if (h === 'warehouse') iW = k;
+    if (h === 'partnumber' || h === 'partno') iP = k;
+    if (h === 'physicalinventory' || h === 'qty' || h === 'inventory') iQ = k;
+    if (h === 'sublocation') iS = k;
+    if (h === 'itemnumber' || h === 'itemno') iItem = k;
   }
+
+  // Strict structural fallbacks based exactly on your 7-column layout order if matching fails
+  if (iDept === -1) iDept = 0;
+  if (iSR === -1) iSR = 1;
+  if (iW === -1) iW = 2;
+  if (iP === -1) iP = 3;
+  if (iQ === -1) iQ = 4;
+  if (iS === -1) iS = 5;
+  if (iItem === -1) iItem = 6;
+
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    if(cols.length <= 1) continue;
+    
+    var qRaw = cols[iQ] || '0';
+    var q = parseFloat(qRaw.toString().replace(/[^0-9.\-]/g, ''));
+    if (isNaN(q)) q = 0;
+    
+    rows.push({
+      dept: cols[iDept] || '',
+      supplierRef: cols[iSR] || '',
+      warehouse: cols[iW] || '',
+      part: cols[iP] || '',
+      sub: cols[iS] || '',
+      itemNo: (cols[iItem] || '').toString().trim(),
+      qty: q
+    });
+  }
+  return rows;
+}
 
   var rows = [];
   for (var r = 1; r < cleaned.length; r++){
