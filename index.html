@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Warehouse Stock Locator - Remote preload (mobile-friendly, 6-column)</title>
 
-<!-- PWA Web Manifest & iOS Web App Meta Tags -->
 <link rel="manifest" href="manifest.json" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Stock Locator" />
 <link class="apple-touch-icon" href="search192.png" />
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
 <style>
 :root{
@@ -52,7 +53,6 @@ header {
   flex: 1.2;
   min-width: 0;
 }
-/* Desktop left app icon size */
 header img.app-icon { width: 36px; height: 36px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
 header strong { 
   font-size: 16px; 
@@ -61,7 +61,6 @@ header strong {
   text-overflow: ellipsis; 
 }
 
-/* Flex-based Centered Logo Container */
 .company-logo-container {
   display: flex;
   justify-content: center;
@@ -94,18 +93,12 @@ button.fixed{ background:#2e8b57; }
 button.secondary{ background:#666; }
 button.danger{ background:#b22222; }
 
-/* Glowing highlight style */
 mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
 [data-theme="dark"] mark.match { background: #ffca28; color: #000; }
 
-/* Centered Core Actions Area */
 .centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
-
-/* Side-by-Side Scanner Button Grid Layout */
 .scanGrid { display: flex; width: 100%; max-width: 340px; gap: 8px; justify-content: center; }
 .scanGrid button { flex: 1; font-size: 13px; padding: 12px 6px; line-height: 1.2; text-align: center; }
-
-/* Layout container for status and live timestamp info row */
 .statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
 
 /* Desktop-default Table Styling */
@@ -116,7 +109,6 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 [data-theme="dark"] th { color: #000; }
 .muted{ color: var(--muted); font-size:12px; }
 
-/* Dynamic Alert Callout Box for Zero Results */
 .alertBox { 
   display: none; 
   background: #fff3cd; 
@@ -135,7 +127,7 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   border-color: #534114;
 }
 
-/* Fullscreen Scanner Overlay Layout */
+/* Fixed Fullscreen Scanner Overlay Layout */
 #scannerOverlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -148,23 +140,23 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
 }
 #scannerBox {
   width: 100%;
-  max-width: 500px;
-  background: #000;
+  max-width: 480px;
+  background: #111;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid var(--accent);
+  position: relative;
+  padding: 10px;
 }
-#scannerVideo {
+/* This element houses the library scanner view frame */
+#scannerReader {
   width: 100%;
-  height: auto;
-  display: block;
+  background: #000;
 }
 #scannerClose {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  width: 100%;
+  margin-top: 10px;
   background: #b22222;
-  z-index: 10000;
 }
 
 /* MOBILE RESPONSIVE BLOCKS */
@@ -172,23 +164,16 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   main{ padding:8px }
   input[type="text"]{ max-width: 100%; }
   
-  /* Mobile Header Configuration */
   header { padding: 10px 8px; min-height: 56px; gap: 8px; }
-  
-  /* Shifted layout constraints to allow a wider title block area */
   .header-left { max-width: 52%; gap: 8px; } 
-  
-  /* 🚀 INCREASED SIZE: Boosted the app locator icon from 18px to 28px on mobile */
   header img.app-icon { width: 28px; height: 28px; }
   header strong { font-size: 11px; font-weight: 700; }
   
-  /* Center square logo setup */
   .company-logo { height: 28px; } 
   .company-logo-container { padding-left: 6px; } 
   
   #clearBtn { padding: 6px 8px; font-size: 10px; }
   
-  /* Responsive Table Modifiers */
   table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
     display: block; 
   }
@@ -247,18 +232,15 @@ input:focus{ border-color: var(--accent); }
 <body>
 
 <header>
-  <!-- Column 1: Left Title Block with Bigger App Icon -->
   <div class="header-left">
     <img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
     <strong>Warehouse Stock Locator</strong>
   </div>
 
-  <!-- Column 2: Center Fluid Logo Block -->
   <div class="company-logo-container">
     <img src="logo.png" alt="Company Logo" class="company-logo" onerror="this.style.display='none';" />
   </div>
 
-  <!-- Column 3: Right Cache Button Block -->
   <div class="header-right">
     <button id="clearBtn" class="danger" title="Clear cached data">Clear App Cache</button>
   </div>
@@ -327,9 +309,9 @@ input:focus{ border-color: var(--accent); }
 </main>
 
 <div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
-<div id="scannerBox" style="position:relative;">
- <button id="scannerClose" class="danger" title="Close scanner">Close</button>
- <video id="scannerVideo" autoplay playsinline></video>
+<div id="scannerBox">
+ <div id="scannerReader"></div>
+ <button id="scannerClose" class="danger" title="Close scanner">Close Camera</button>
 </div>
 </div>
 
@@ -357,12 +339,11 @@ var accentColor = document.getElementById('accentColor');
 var themeToggle = document.getElementById('themeToggle');
 var themeStatus = document.getElementById('themeStatus');
 var scannerOverlay = document.getElementById('scannerOverlay');
-var scannerVideo = document.getElementById('scannerVideo');
 var scannerClose = document.getElementById('scannerClose');
 
 var searchTimeout = null;
 var activeScanTarget = 'part'; 
-var isProcessingScan = false;
+var html5QrcodeScannerInstance = null; // Scanner handle storage space
 
 function escapeHtml(text){
   if (text == null) return '';
@@ -653,121 +634,93 @@ function loadBackupData() {
   }
 }
 
-/* 🛠️ ROBUST MODERNIZE SCANNER HOOKS 🛠️ */
-var detector = null;
-var streamActive = false;
-var videoStream = null;
-
+/* 🚀 UNIVERSAL HTML5-QRCODE ENGINE INTEGRATION 🚀 */
 scanQrBtn.addEventListener('click', function(){
   activeScanTarget = 'part';
-  initiateCameraStream(['qr_code']);
+  startUniversalScanner([Html5QrcodeSupportedFormats.QR_CODE]);
 });
 
 scanBarBtn.addEventListener('click', function(){
   activeScanTarget = 'supplier';
-  initiateCameraStream(['code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e']);
+  startUniversalScanner([
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E
+  ]);
 });
 
-// Clean modern asynchronous promise implementation to handle hardware lockouts safely
-async function initiateCameraStream(allowedFormats) {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    alert('Camera API hardware access is missing or blocked by your browser security configuration. Please ensure you are loading via safe HTTPS.');
-    return;
+function startUniversalScanner(targetFormats) {
+  // Clear any existing active instance safety wrap
+  if (html5QrcodeScannerInstance) {
+    stopUniversalScanner();
   }
-  
-  isProcessingScan = false;
+
   scannerOverlay.style.display = 'flex';
   
-  var constraints = {
-    video: {
-      facingMode: { ideal: 'environment' },
-      width: { ideal: 1280 },
-      height: { ideal: 720 }
+  // Instantiating the parsing canvas instance wrapper
+  html5QrcodeScannerInstance = new Html5Qrcode("scannerReader");
+  
+  const scannerConfig = {
+    fps: 15,
+    qrbox: function(width, height) {
+      // Dynamic mobile box target square dimensions sizing
+      var minDimension = Math.min(width, height);
+      var boxSize = Math.floor(minDimension * 0.65);
+      return { width: boxSize, height: boxSize };
     },
-    audio: false
+    formatsToSupport: targetFormats
   };
 
-  try {
-    var stream = await navigator.mediaDevices.getUserMedia(constraints);
-    videoStream = stream;
-    scannerVideo.srcObject = stream;
-    
-    // Explicit modern play promise checking to handle race-conditions on mobile browsers
-    await scannerVideo.play();
-    streamActive = true;
-
-    if ('BarcodeDetector' in window) {
-      detector = new BarcodeDetector({ formats: allowedFormats });
-      var canvas = document.createElement('canvas');
-      var ctx = canvas.getContext('2d');
-      
-      // Auto-scale canvas tracking variables to match streaming input resolution
-      canvas.width = 640; 
-      canvas.height = 480;
-
-      function executionTick() {
-        if (!streamActive || isProcessingScan) return;
-        try {
-          if (scannerVideo.readyState === scannerVideo.HAVE_ENOUGH_DATA) {
-            ctx.drawImage(scannerVideo, 0, 0, canvas.width, canvas.height);
-            detector.detect(canvas)
-              .then(barcodes => {
-                if (barcodes && barcodes.length > 0 && !isProcessingScan) {
-                  var dataValue = (barcodes[0].rawValue || barcodes[0].displayValue || '').toString();
-                  if (dataValue && dataValue.trim().length > 0) {
-                    isProcessingScan = true;
-                    handleInstantScanResult(dataValue);
-                    return; 
-                  }
-                }
-                if (!isProcessingScan) requestAnimationFrame(executionTick);
-              })
-              .catch(() => { 
-                if (!isProcessingScan) requestAnimationFrame(executionTick); 
-              });
-          } else {
-            if (!isProcessingScan) requestAnimationFrame(executionTick);
-          }
-        } catch(err) {
-          if (!isProcessingScan) requestAnimationFrame(executionTick);
+  html5QrcodeScannerInstance.start(
+    { facingMode: "environment" },
+    scannerConfig,
+    function onScanSuccess(decodedText) {
+      if (decodedText) {
+        // Strip leading zeros safely
+        var cleanCode = decodedText.toString().replace(/^0+/, '');
+        
+        if (activeScanTarget === 'part') {
+          searchBox.value = cleanCode;
+        } else {
+          supplierBox.value = cleanCode;
         }
+        
+        renderTable();
+        stopUniversalScanner();
       }
-      requestAnimationFrame(executionTick);
-    } else {
-      alert('Native BarcodeDetector framework missing. Ensure experimental Web Platform Features are turned on in flag settings or use standard chrome mobile channels.');
+    },
+    function onScanFailure(error) {
+      // Silent pass: library searches frames continually background loop
     }
-  } catch (error) {
-    console.error('Camera initialization error details:', error);
-    alert('Camera Access Denied: Please check your phone settings app and grant browser access permission to use the camera hardware layout.');
-    stopScanner();
-  }
+  ).catch(err => {
+    console.error("Camera startup error:", err);
+    alert("Camera Access Error: Make sure to click 'Allow' when the browser asks for camera permission.");
+    stopUniversalScanner();
+  });
 }
 
-function handleInstantScanResult(rawCode) {
-  var cleanCode = rawCode.replace(/^0+/, ''); 
-  
-  if (activeScanTarget === 'part') {
-    searchBox.value = cleanCode;
+scannerClose.addEventListener('click', stopUniversalScanner);
+
+function stopUniversalScanner() {
+  if (html5QrcodeScannerInstance) {
+    html5QrcodeScannerInstance.stop().then(() => {
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = ""; // Clear lingering inner structures
+      scannerOverlay.style.display = 'none';
+    }).catch(err => {
+      console.warn("Forced cleanup handle active:", err);
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = "";
+      scannerOverlay.style.display = 'none';
+    });
   } else {
-    supplierBox.value = cleanCode;
+    scannerOverlay.style.display = 'none';
   }
-  
-  renderTable();
-  stopScanner();
 }
 
-scannerClose.addEventListener('click', stopScanner);
-function stopScanner(){
-  streamActive = false;
-  isProcessingScan = true;
-  if (videoStream){ 
-    videoStream.getTracks().forEach(function(track){ track.stop(); }); 
-  }
-  videoStream = null;
-  scannerVideo.srcObject = null;
-  scannerOverlay.style.display = 'none';
-}
-scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopScanner(); });
+scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopUniversalScanner(); });
 </script>
 
 </body>
