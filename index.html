@@ -101,7 +101,7 @@ mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3p
 .scanGrid button { flex: 1; font-size: 13px; padding: 12px 6px; line-height: 1.2; text-align: center; }
 .statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
 
-/* Desktop-default Table Styling */
+/* Desktop Table Layout */
 .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
 table.resultsTable th, table.resultsTable td { border: 1px solid #ddd; padding: 10px 8px; text-align: left; }
@@ -127,7 +127,7 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   border-color: #534114;
 }
 
-/* Fixed Fullscreen Scanner Overlay Layout */
+/* Fullscreen Overlay Box */
 #scannerOverlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -162,7 +162,7 @@ table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
   font-size: 14px;
 }
 
-/* Clean up library interface clutter styling overrides */
+/* Clear up library viewfinder styling layout */
 #scannerReader video {
   object-fit: cover !important;
 }
@@ -341,4 +341,386 @@ var timestampDisplay = document.getElementById('timestampDisplay');
 var summary = document.getElementById('summary');
 var clearBtn = document.getElementById('clearBtn');
 var scanQrBtn = document.getElementById('scanQrBtn');
-var scan
+var scanBarBtn = document.getElementById('scanBarBtn');
+var resetSearchBtn = document.getElementById('resetSearchBtn');
+var accentColor = document.getElementById('accentColor');
+var themeToggle = document.getElementById('themeToggle');
+var themeStatus = document.getElementById('themeStatus');
+var scannerOverlay = document.getElementById('scannerOverlay');
+var scannerClose = document.getElementById('scannerClose');
+
+var searchTimeout = null;
+var activeScanTarget = 'part'; 
+var html5QrcodeScannerInstance = null;
+
+function escapeHtml(text){
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function parseCSVLine(line){
+  var res = [];
+  var cur = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++){
+    var ch = line[i];
+    if (inQuotes){
+      if (ch === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === '"'){ inQuotes = true; }
+      else if (ch === ','){ res.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  res.push(cur);
+  return res;
+}
+
+function parseCSV(text){
+  var lines = text.split(/\r?\n/);
+  var cleaned = [];
+  for (var i = 0; i < lines.length; i++){
+    var l = lines[i];
+    if (l && l.trim().length > 0) cleaned.push(l);
+  }
+  if (cleaned.length < 2) return [];
+
+  var headers = parseCSVLine(cleaned[0]);
+  var lower = headers.map(h => (h || '').toString().toLowerCase().trim());
+  
+  var iDept = -1, iW = -1, iSR = -1, iP = -1, iQ = -1, iS = -1;
+  for (var k = 0; k < lower.length; k++){
+    var h = lower[k];
+    if (iDept === -1 && (h.indexOf('dept') !== -1 || h.indexOf('department') !== -1)) iDept = k;
+    if (iW === -1 && h.indexOf('warehouse') !== -1) iW = k;
+    if (iSR === -1 && h.indexOf('supplier') !== -1 && h.indexOf('reference') !== -1) iSR = k;
+    if (iP === -1 && h.indexOf('part') !== -1) iP = k;
+    if (iQ === -1 && (h.indexOf('physical') !== -1 || h.indexOf('inventory') !== -1 || h.indexOf('qty') !== -1 || h.indexOf('quantity') !== -1)) iQ = k;
+    if (iS === -1 && (h.indexOf('sub') !== -1 || h.indexOf('sublocation') !== -1)) iS = k;
+  }
+
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    var qRaw = cols[iQ] || '0';
+    var q = parseInt(qRaw.toString().replace(/[^0-9.\-]/g, ''), 10);
+    if (isNaN(q)) q = 0;
+    
+    rows.push({
+      dept: cols[iDept] || '',
+      warehouse: cols[iW] || '',
+      supplierRef: cols[iSR] || '',
+      part: cols[iP] || '',
+      sub: cols[iS] || '',
+      qty: q
+    });
+  }
+  return rows;
+}
+
+function matchesQuery(value, query){
+  var q = (query || '').toString().trim();
+  if (q.length === 0) return true;
+  var v = (value || '').toString().toLowerCase().trim();
+  return v.indexOf(q.toLowerCase()) !== -1;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  var cleanText = escapeHtml(text);
+  var cleanQuery = (query || '').toString().trim();
+  if (!cleanQuery) return cleanText;
+  
+  try {
+    var regex = new RegExp('(' + escapeRegExp(cleanQuery) + ')', 'gi');
+    return cleanText.replace(regex, '<mark class="match">$1</mark>');
+  } catch(e) {
+    return cleanText;
+  }
+}
+
+function renderTable(){
+  var partQuery = (searchBox.value || '').toString().trim();
+  var supplierQuery = (supplierBox.value || '').toString().trim();
+
+  var rows = [];
+  for (var i = 0; i < allData.length; i++){
+    var row = allData[i];
+    if (!row || row.qty <= 0) continue;
+
+    if (matchesQuery(row.part, partQuery) && matchesQuery(row.supplierRef, supplierQuery)){
+      rows.push(row);
+    }
+  }
+  filteredData = rows;
+
+  if (rows.length === 0) {
+    resultsTableBody.innerHTML = '';
+    tableWrapContainer.style.display = 'none';
+    noResultsAlert.style.display = 'block';
+    summary.textContent = 'Records: 0';
+    return;
+  }
+
+  tableWrapContainer.style.display = 'block';
+  noResultsAlert.style.display = 'none';
+
+  var fragment = document.createDocumentFragment();
+  var maxDisplay = Math.min(rows.length, 100); 
+
+  for (var j = 0; j < maxDisplay; j++){
+    var r = rows[j];
+    var tr = document.createElement('tr');
+    
+    var highlightedPart = highlightText(r.part, partQuery);
+    var highlightedSupplier = highlightText(r.supplierRef, supplierQuery);
+    
+    tr.innerHTML = 
+      '<td>' + escapeHtml(r.dept) + '</td>' +
+      '<td>' + escapeHtml(r.warehouse) + '</td>' +
+      '<td>' + highlightedSupplier + '</td>' +
+      '<td>' + highlightedPart + '</td>' +
+      '<td>' + r.qty + '</td>' +
+      '<td>' + escapeHtml(r.sub) + '</td>';
+    fragment.appendChild(tr);
+  }
+
+  resultsTableBody.innerHTML = '';
+  resultsTableBody.appendChild(fragment);
+  
+  if (rows.length > 100) {
+    summary.textContent = 'Showing top 100 of ' + rows.length + ' records';
+  } else {
+    summary.textContent = 'Records: ' + rows.length;
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(renderTable, 220); 
+}
+
+searchBox.addEventListener('input', debounceSearch);
+supplierBox.addEventListener('input', debounceSearch);
+
+resetSearchBtn.addEventListener('click', function(){
+  searchBox.value = '';
+  supplierBox.value = '';
+  renderTable();
+});
+
+clearBtn.addEventListener('click', function(){
+  if(confirm("Clear application cache and force-reload fresh data from GitHub?")){
+    allData = [];
+    localStorage.removeItem(LAST_DATA_KEY);
+    localStorage.removeItem(LAST_TIME_KEY);
+    renderTable();
+    status.textContent = 'Data cleared';
+    location.reload();
+  }
+});
+
+function hexToRgba(hex, alpha){
+  var r=0,g=0,b=0;
+  if (hex.charAt(0) === '#') hex = hex.substring(1);
+  if (hex.length === 3){
+    r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+    g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+    b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+  } else if (hex.length === 6){
+    r = parseInt(hex.substring(0,2), 16);
+    g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
+  }
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+accentColor.addEventListener('input', function(){
+  document.documentElement.style.setProperty('--accent', accentColor.value);
+  document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
+  localStorage.setItem('sl_accent', accentColor.value);
+});
+
+themeToggle.addEventListener('change', function(){
+  if (themeToggle.checked){
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+  themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
+});
+
+function getFormattedDate() {
+  var now = new Date();
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var month = months[now.getMonth()];
+  var day = now.getDate();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+  return month + ' ' + day + ', ' + hours + ':' + minutes + ' ' + ampm;
+}
+
+(function init(){
+  var savedAccent = localStorage.getItem('sl_accent');
+  if (savedAccent){
+    accentColor.value = savedAccent;
+    document.documentElement.style.setProperty('--accent', savedAccent);
+    document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
+  }
+
+  var savedTheme = localStorage.getItem('sl_theme');
+  if (savedTheme === 'dark'){
+    themeToggle.checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (savedTheme === 'light'){
+    themeToggle.checked = false;
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+      themeToggle.checked = true;
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  }
+
+  status.textContent = 'Checking for inventory updates...';
+  
+  fetch(REMOTE_CSV_URL, { cache: 'no-store' })
+    .then(r => r.text())
+    .then(text => {
+      var rows = parseCSV(text);
+      if (rows.length > 0) {
+        allData = rows;
+        renderTable();
+        status.textContent = 'Inventory up to date';
+        
+        var timestampStr = "Live Sync: " + getFormattedDate();
+        timestampDisplay.textContent = timestampStr;
+        
+        localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+        localStorage.setItem(LAST_TIME_KEY, timestampStr);
+      } else {
+        status.textContent = 'Error reading file. Loading backup...';
+        loadBackupData();
+      }
+    })
+    .catch(function(){
+      status.textContent = 'Offline Mode. Loading backup...';
+      loadBackupData();
+    });
+
+  scannerOverlay.style.display = 'none';
+})();
+
+function loadBackupData() {
+  var last = localStorage.getItem(LAST_DATA_KEY);
+  var lastTime = localStorage.getItem(LAST_TIME_KEY);
+  if (last){ 
+    try { 
+      allData = JSON.parse(last); 
+      renderTable();
+      if(lastTime) {
+        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
+      }
+    } catch(e) { 
+      allData = []; 
+    } 
+  }
+}
+
+/* HARDCODED VIEWFINDER CONFIGURATION */
+scanQrBtn.addEventListener('click', function(){
+  activeScanTarget = 'part';
+  startUniversalScanner([Html5QrcodeSupportedFormats.QR_CODE]);
+});
+
+scanBarBtn.addEventListener('click', function(){
+  activeScanTarget = 'supplier';
+  startUniversalScanner([
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E
+  ]);
+});
+
+function startUniversalScanner(targetFormats) {
+  if (html5QrcodeScannerInstance) {
+    stopUniversalScanner();
+  }
+
+  scannerOverlay.style.display = 'flex';
+  html5QrcodeScannerInstance = new Html5Qrcode("scannerReader");
+  
+  // Strict hardcoded pixel square box dimensions override sizing engine bugs
+  const scannerConfig = {
+    fps: 20,
+    qrbox: { width: 250, height: 250 },
+    formatsToSupport: targetFormats
+  };
+
+  html5QrcodeScannerInstance.start(
+    { facingMode: "environment" },
+    scannerConfig,
+    function onScanSuccess(decodedText) {
+      if (decodedText) {
+        var cleanCode = decodedText.toString().replace(/^0+/, '');
+        
+        if (activeScanTarget === 'part') {
+          searchBox.value = cleanCode;
+        } else {
+          supplierBox.value = cleanCode;
+        }
+        
+        renderTable();
+        stopUniversalScanner();
+      }
+    },
+    function onScanFailure(error) {
+      // Loop frames background search
+    }
+  ).catch(err => {
+    console.error("Camera startup error:", err);
+    alert("Camera Access Error: Ensure you give the site camera permission.");
+    stopUniversalScanner();
+  });
+}
+
+scannerClose.addEventListener('click', stopUniversalScanner);
+
+function stopUniversalScanner() {
+  if (html5QrcodeScannerInstance) {
+    html5QrcodeScannerInstance.stop().then(() => {
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = ""; 
+      scannerOverlay.style.display = 'none';
+    }).catch(err => {
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = "";
+      scannerOverlay.style.display = 'none';
+    });
+  } else {
+    scannerOverlay.style.display = 'none';
+  }
+}
+
+scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopUniversalScanner(); });
+</script>
+
+</body>
+</html>
