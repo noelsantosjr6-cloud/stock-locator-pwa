@@ -35,6 +35,700 @@ html, body { height: 100%; }
 body{ margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); }
 
 header { 
+  position: relative;
+  padding: 10px 16px; 
+  background: var(--panel); 
+  border-bottom: 1px solid var(--accent); 
+  display: flex;
+  justify-content: space-between;
+  align-items: center; 
+  min-height: 60px;
+}
+.header-left {
+  display: flex; 
+  gap: 8px; 
+  align-items: center; 
+  justify-content: flex-start;
+  z-index: 1;
+}
+header img.app-icon { width: 32px; height: 32px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+header strong { 
+  font-size: 15px; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}
+
+/* FIX: Absolute positioning ensures true dead-center alignment regardless of side-text lengths */
+.company-logo-container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.company-logo {
+  height: 36px; 
+  width: auto;
+  object-fit: contain;
+}
+
+.header-right {
+  display: flex; 
+  justify-content: flex-end; 
+  align-items: center;
+  z-index: 1;
+}
+#clearBtn { padding: 8px 12px; font-size: 12px; white-space: nowrap; font-weight: bold; border-radius: 6px;}
+
+main{ padding:14px }
+.card{ background:var(--panel); border:1px solid var(--accent); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,.05) }
+.row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center }
+label{ font-weight:600 }
+input[type="text"]{ padding:8px 10px; border:1px solid #ccc; border-radius:6px; width:100%; max-width:340px }
+button{ color:#fff; border:0; padding:10px 14px; border-radius:6px; cursor:pointer; font-weight: 600; }
+button.fixed{ background:#2e8b57; }
+button.secondary{ background:#666; }
+button.danger{ background:#b22222; }
+
+mark.match { background: #ffeb3b; color: #000; padding: 0 2px; border-radius: 3px; font-weight: bold; }
+[data-theme="dark"] mark.match { background: #ffca28; color: #000; }
+
+.centerActions { width:100%; display:flex; flex-direction:column; gap:8px; align-items:center; padding:6px 0; }
+.scanGrid { display: flex; width: 100%; max-width: 340px; gap: 8px; justify-content: center; }
+.scanGrid button { flex: 1; font-size: 13px; padding: 12px 6px; line-height: 1.2; text-align: center; }
+.statusContainer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 4px; }
+
+.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.resultsTable { width: 100%; border-collapse: collapse; table-layout: auto; }
+table.resultsTable th, table.resultsTable td { border: 1px solid #ddd; padding: 10px 8px; text-align: left; }
+table.resultsTable thead th { background: #f0f0f0; font-weight: 600; }
+[data-theme="dark"] th { color: #000; }
+.muted{ color: var(--muted); font-size:12px; }
+
+.alertBox { 
+  display: none; 
+  background: #fff3cd; 
+  color: #856404; 
+  border: 1px solid #ffeeba; 
+  padding: 14px; 
+  border-radius: 8px; 
+  font-weight: bold; 
+  text-align: center; 
+  margin-top: 10px;
+  font-size: 15px;
+}
+[data-theme="dark"] .alertBox {
+  background: #2c2513;
+  color: #ffda6a;
+  border-color: #534114;
+}
+
+#scannerOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 12px;
+}
+#scannerBox {
+  width: 100%;
+  max-width: 440px;
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--accent);
+  position: relative;
+  padding: 12px;
+}
+#scannerReader {
+  width: 100%;
+  background: #000;
+  border-radius: 6px;
+  overflow: hidden;
+}
+#scannerClose {
+  width: 100%;
+  margin-top: 12px;
+  background: #b22222;
+  padding: 12px;
+  font-size: 14px;
+}
+
+#scannerReader video {
+  object-fit: cover !important;
+}
+
+@media (max-width: 700px){
+  main{ padding:8px }
+  input[type="text"]{ max-width: 100%; }
+  
+  header { padding: 8px 6px; min-height: 52px; }
+  header img.app-icon { width: 24px; height: 24px; }
+  header strong { font-size: 11px; font-weight: 700; }
+  
+  .company-logo { height: 28px; } 
+  
+  #clearBtn { padding: 6px 8px; font-size: 10px; }
+  
+  table.resultsTable, table.resultsTable thead, table.resultsTable tbody, table.resultsTable th, table.resultsTable td, table.resultsTable tr { 
+    display: block; 
+  }
+  table.resultsTable thead tr { position: absolute; top: -9999px; left: -9999px; }
+  table.resultsTable tr {
+    background: var(--card);
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  table.resultsTable td {
+    border: none;
+    padding: 6px 4px;
+    position: relative;
+    padding-left: 44%;
+    white-space: normal; 
+    text-overflow: clip;
+    overflow: visible;
+    font-size: 14px;
+    min-height: 1.8em; 
+    display: block;
+    text-align: left;
+  }
+  table.resultsTable td:before {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 40%;
+    padding-right: 10px;
+    white-space: nowrap;
+    font-weight: bold;
+    color: var(--muted);
+  }
+  
+  table.resultsTable td:nth-of-type(1):before { content: "Dept:"; }
+  table.resultsTable td:nth-of-type(2):before { content: "Supplier Ref:"; }
+  table.resultsTable td:nth-of-type(3):before { content: "Warehouse:"; }
+  table.resultsTable td:nth-of-type(4):before { content: "Part Number:"; }
+  table.resultsTable td:nth-of-type(5):before { content: "Inventory:"; }
+  table.resultsTable td:nth-of-type(6):before { content: "SubLocation:"; }
+  table.resultsTable td:nth-of-type(7):before { content: "Item Number:"; }
+  
+  table.resultsTable td:nth-of-type(4) {
+    font-weight: bold;
+    font-size: 15px;
+    border-bottom: 1px dashed #eee;
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+  }
+}
+
+input:focus, button:focus{ outline: none; box-shadow: 0 0 0 2px rgba(46,139,87,.25); }
+input:focus{ border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img src="search192.png" alt="App Icon" class="app-icon" onerror="this.style.display='none';" />
+    <strong>Stock Locator</strong>
+  </div>
+
+  <div class="company-logo-container">
+    <img src="logo.png" alt="Logo" class="company-logo" onerror="this.style.display='none';" />
+  </div>
+
+  <div class="header-right">
+    <button id="clearBtn" class="danger">Clear App Cache</button>
+  </div>
+</header>
+
+<main>
+<section class="card" aria-label="data controls">
+<div class="row" style="gap:12px; align-items:flex-start;">
+ 
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
+ <label for="searchBox" class="muted" style="font-weight:600">Search Part Number / Item No.</label><br/>
+ <input id="searchBox" type="text" placeholder="e.g., HLA1530 or Item Number" />
+ </div>
+ 
+ <div style="flex:1 1 auto; min-width:0; width:100%;">
+ <label for="supplierBox" class="muted" style="font-weight:600">Search Supplier Reference</label><br/>
+ <input id="supplierBox" type="text" placeholder="Supplier Reference" />
+ </div>
+
+ <div class="centerActions" aria-label="scan actions">
+   <div class="scanGrid">
+     <button id="scanQrBtn" class="fixed" title="Scan QR Code">Scan QR Code</button>
+     <button id="scanBarBtn" class="fixed" title="Scan Barcode into Supplier Reference">Scan Supplier Ref</button>
+   </div>
+   <button id="resetSearchBtn" class="secondary" title="Reset all typed searches" style="width:100%; max-width:340px; padding:10px; background:#444;">Reset Search Fields</button>
+ </div>
+</div>
+
+<div class="row" style="gap:12px;align-items:center;margin-top:12px;border-top:1px dashed #eee;padding-top:12px;">
+ <label for="accentColor" style="font-weight:600" title="Accent color">Accent color</label>
+ <input id="accentColor" type="color" value="#2e8b57" />
+ <label for="themeToggle" style="margin-left:8px;">Dark mode</label>
+ <input id="themeToggle" type="checkbox" />
+ <span id="themeStatus" class="muted" style="margin-left:8px"></span>
+</div>
+
+<div class="statusContainer">
+  <div id="status" class="muted">Loading stocks.csv from host...</div>
+  <div id="timestampDisplay" class="muted" style="font-weight: 600;">Live Sync: --/--/-- --:--</div>
+</div>
+
+</section>
+
+<section class="card" aria-label="results">
+<h3 style="margin:0 0 8px 0">Results (Quantity > 0)</h3>
+
+<div class="tableWrap" id="tableWrapContainer">
+ <table id="resultsTable" class="resultsTable" aria-label="stock results">
+ <thead>
+ <tr>
+ <th>Dept</th>
+ <th>Supplier Reference</th>
+ <th>Warehouse</th>
+ <th>Part Number</th>
+ <th>Physical Inventory</th>
+ <th>SubLocation</th>
+ <th>Item Number</th>
+ </tr>
+ </thead>
+ <tbody></tbody>
+ </table>
+</div>
+
+<div id="noResultsAlert" class="alertBox">❌ No matching item found in current stock registry.</div>
+<div id="summary" class="muted" style="margin-top:6px"></div>
+</section>
+</main>
+
+<div id="scannerOverlay" aria-label="barcode scanner" role="dialog" aria-modal="true">
+<div id="scannerBox">
+ <div id="scannerReader"></div>
+ <button id="scannerClose" class="danger" title="Close scanner">Close Camera</button>
+</div>
+</div>
+
+<script>
+const REMOTE_CSV_URL = 'https://raw.githubusercontent.com/noelsantosjr6-cloud/stock-locator-pwa/refs/heads/main/stocks.csv?v=' + new Date().getTime();
+const LAST_DATA_KEY = 'sl_lastData';
+const LAST_TIME_KEY = 'sl_lastTime';
+
+var allData = [];
+var filteredData = [];
+
+var searchBox = document.getElementById('searchBox');
+var supplierBox = document.getElementById('supplierBox');
+var resultsTableBody = document.querySelector('#resultsTable tbody');
+var tableWrapContainer = document.getElementById('tableWrapContainer');
+var noResultsAlert = document.getElementById('noResultsAlert');
+var status = document.getElementById('status');
+var timestampDisplay = document.getElementById('timestampDisplay');
+var summary = document.getElementById('summary');
+var clearBtn = document.getElementById('clearBtn');
+var scanQrBtn = document.getElementById('scanQrBtn');
+var scanBarBtn = document.getElementById('scanBarBtn');
+var resetSearchBtn = document.getElementById('resetSearchBtn');
+var accentColor = document.getElementById('accentColor');
+var themeToggle = document.getElementById('themeToggle');
+var themeStatus = document.getElementById('themeStatus');
+var scannerOverlay = document.getElementById('scannerOverlay');
+var scannerClose = document.getElementById('scannerClose');
+
+var searchTimeout = null;
+var activeScanTarget = 'part'; 
+var html5QrcodeScannerInstance = null;
+
+function escapeHtml(text){
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function parseCSVLine(line){
+  var res = [];
+  var cur = '';
+  var inQuotes = false;
+  for (var i = 0; i < line.length; i++){
+    var ch = line[i];
+    if (inQuotes){
+      if (ch === '"'){
+        if (line[i+1] === '"'){ cur += '"'; i++; } else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if (ch === '"'){ inQuotes = true; }
+      else if (ch === ','){ res.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  res.push(cur);
+  return res;
+}
+
+function parseCSV(text){
+  var lines = text.split(/\r?\n/);
+  var cleaned = [];
+  for (var i = 0; i < lines.length; i++){
+    var l = lines[i];
+    if (l && l.trim().length > 0) cleaned.push(l);
+  }
+  if (cleaned.length < 2) return [];
+
+  var iDept = 0;
+  var iSR = 1;
+  var iW = 2;
+  var iP = 3;
+  var iQ = 4;
+  var iS = 5;
+  var iItem = 6;
+
+  var rows = [];
+  for (var r = 1; r < cleaned.length; r++){
+    var cols = parseCSVLine(cleaned[r]);
+    if(cols.length <= 1) continue;
+    
+    var qRaw = cols[iQ] || '0';
+    var q = parseInt(qRaw.toString().replace(/[^0-9.\-]/g, ''), 10);
+    if (isNaN(q)) q = 0;
+    
+    rows.push({
+      dept: cols[iDept] || '',
+      supplierRef: cols[iSR] || '',
+      warehouse: cols[iW] || '',
+      part: cols[iP] || '',
+      sub: cols[iS] || '',
+      itemNo: cols[iItem] ? cols[iItem].toString().trim() : '',
+      qty: q
+    });
+  }
+  return rows;
+}
+
+function matchesQuery(row, query){
+  var q = (query || '').toString().trim().toLowerCase();
+  if (q.length === 0) return true;
+  
+  var partMatch = (row.part || '').toString().toLowerCase().indexOf(q) !== -1;
+  var itemMatch = (row.itemNo || '').toString().toLowerCase().indexOf(q) !== -1;
+  
+  return partMatch || itemMatch;
+}
+
+function matchesSupplierQuery(value, query){
+  var q = (query || '').toString().trim().toLowerCase();
+  if (q.length === 0) return true;
+  return (value || '').toString().toLowerCase().indexOf(q) !== -1;
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  var cleanText = escapeHtml(text);
+  var cleanQuery = (query || '').toString().trim();
+  if (!cleanQuery) return cleanText;
+  
+  try {
+    var regex = new RegExp('(' + escapeRegExp(cleanQuery) + ')', 'gi');
+    return cleanText.replace(regex, '<mark class="match">$1</mark>');
+  } catch(e) {
+    return cleanText;
+  }
+}
+
+function renderTable(){
+  var partQuery = (searchBox.value || '').toString().trim();
+  var supplierQuery = (supplierBox.value || '').toString().trim();
+
+  var rows = [];
+  for (var i = 0; i < allData.length; i++){
+    var row = allData[i];
+    if (!row || row.qty <= 0) continue;
+
+    if (matchesQuery(row, partQuery) && matchesSupplierQuery(row.supplierRef, supplierQuery)){
+      rows.push(row);
+    }
+  }
+  filteredData = rows;
+
+  if (rows.length === 0) {
+    resultsTableBody.innerHTML = '';
+    tableWrapContainer.style.display = 'none';
+    noResultsAlert.style.display = 'block';
+    summary.textContent = 'Records: 0';
+    return;
+  }
+
+  tableWrapContainer.style.display = 'block';
+  noResultsAlert.style.display = 'none';
+
+  var fragment = document.createDocumentFragment();
+  var maxDisplay = Math.min(rows.length, 100); 
+
+  for (var j = 0; j < maxDisplay; j++){
+    var r = rows[j];
+    var tr = document.createElement('tr');
+    
+    var highlightedPart = highlightText(r.part, partQuery);
+    var highlightedSupplier = highlightText(r.supplierRef, supplierQuery);
+    
+    // CHANGE: Highlighting applies to SubLocation instead of Item Number
+    var highlightedSub = highlightText(r.sub, partQuery);
+    
+    tr.innerHTML = 
+      '<td>' + escapeHtml(r.dept) + '</td>' +
+      '<td>' + highlightedSupplier + '</td>' +
+      '<td>' + escapeHtml(r.warehouse) + '</td>' +
+      '<td>' + highlightedPart + '</td>' +
+      '<td>' + r.qty + '</td>' +
+      '<td>' + highlightedSub + '</td>' +
+      '<td>' + escapeHtml(r.itemNo) + '</td>';
+    fragment.appendChild(tr);
+  }
+
+  resultsTableBody.innerHTML = '';
+  resultsTableBody.appendChild(fragment);
+  
+  if (rows.length > 100) {
+    summary.textContent = 'Showing top 100 of ' + rows.length + ' records';
+  } else {
+    summary.textContent = 'Records: ' + rows.length;
+  }
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(renderTable, 220); 
+}
+
+searchBox.addEventListener('input', debounceSearch);
+supplierBox.addEventListener('input', debounceSearch);
+
+resetSearchBtn.addEventListener('click', function(){
+  searchBox.value = '';
+  supplierBox.value = '';
+  renderTable();
+});
+
+clearBtn.addEventListener('click', function(){
+  if(confirm("Clear application cache and force-reload fresh data?")){
+    allData = [];
+    localStorage.removeItem(LAST_DATA_KEY);
+    localStorage.removeItem(LAST_TIME_KEY);
+    renderTable();
+    status.textContent = 'Data cleared';
+    location.reload();
+  }
+});
+
+function hexToRgba(hex, alpha){
+  var r=0,g=0,b=0;
+  if (hex.charAt(0) === '#') hex = hex.substring(1);
+  if (hex.length === 3){
+    r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+    g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+    b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+  } else if (hex.length === 6){
+    r = parseInt(hex.substring(0,2), 16);
+    g = parseInt(hex.substring(2,4), 16);
+    b = parseInt(hex.substring(4,6), 16);
+  }
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+accentColor.addEventListener('input', function(){
+  document.documentElement.style.setProperty('--accent', accentColor.value);
+  document.body.style.backgroundColor = hexToRgba(accentColor.value, 0.08);
+  localStorage.setItem('sl_accent', accentColor.value);
+});
+
+themeToggle.addEventListener('change', function(){
+  if (themeToggle.checked){
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('sl_theme', themeToggle.checked ? 'dark' : 'light');
+  themeStatus.textContent = themeToggle.checked ? 'Dark mode' : 'Light mode';
+});
+
+function getFormattedDate() {
+  var now = new Date();
+  var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var month = months[now.getMonth()];
+  var day = now.getDate();
+  var hours = now.getHours();
+  var minutes = now.getMinutes();
+  var ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+  return month + ' ' + day + ', ' + hours + ':' + minutes + ' ' + ampm;
+}
+
+function loadBackupData() {
+  var last = localStorage.getItem(LAST_DATA_KEY);
+  var lastTime = localStorage.getItem(LAST_TIME_KEY);
+  if (last){ 
+    try { 
+      allData = JSON.parse(last); 
+      renderTable();
+      if(lastTime) {
+        timestampDisplay.textContent = lastTime.replace("Live Sync:", "Cached:") + " (Offline)";
+      }
+    } catch(e) { 
+      allData = []; 
+    } 
+  }
+}
+
+(function init(){
+  var savedAccent = localStorage.getItem('sl_accent');
+  if (savedAccent){
+    accentColor.value = savedAccent;
+    document.documentElement.style.setProperty('--accent', savedAccent);
+    document.body.style.backgroundColor = hexToRgba(savedAccent, 0.08);
+  }
+
+  var savedTheme = localStorage.getItem('sl_theme');
+  if (savedTheme === 'dark'){
+    themeToggle.checked = true;
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else if (savedTheme === 'light'){
+    themeToggle.checked = false;
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+      themeToggle.checked = true;
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  }
+
+  status.textContent = 'Checking for inventory updates...';
+  
+  fetch(REMOTE_CSV_URL, { cache: 'no-store' })
+    .then(r => r.text())
+    .then(text => {
+      var rows = parseCSV(text);
+      if (rows.length > 0) {
+        allData = rows;
+        renderTable();
+        status.textContent = 'Inventory up to date';
+        
+        var timestampStr = "Live Sync: " + getFormattedDate();
+        timestampDisplay.textContent = timestampStr;
+        
+        localStorage.setItem(LAST_DATA_KEY, JSON.stringify(allData));
+        localStorage.setItem(LAST_TIME_KEY, timestampStr);
+      } else {
+        status.textContent = 'Error reading file. Loading backup...';
+        loadBackupData();
+      }
+    })
+    .catch(function(err){
+      console.error(err);
+      status.textContent = 'Offline Mode. Loading backup...';
+      loadBackupData();
+    });
+
+  scannerOverlay.style.display = 'none';
+})();
+
+/* SCANNER CONFIGURATION */
+scanQrBtn.addEventListener('click', function(){
+  activeScanTarget = 'part';
+  startUniversalScanner([Html5QrcodeSupportedFormats.QR_CODE]);
+});
+
+scanBarBtn.addEventListener('click', function(){
+  activeScanTarget = 'supplier';
+  startUniversalScanner([
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E
+  ]);
+});
+
+function startUniversalScanner(targetFormats) {
+  if (html5QrcodeScannerInstance) {
+    stopUniversalScanner();
+  }
+
+  scannerOverlay.style.display = 'flex';
+  html5QrcodeScannerInstance = new Html5Qrcode("scannerReader");
+  
+  const scannerConfig = {
+    fps: 20,
+    qrbox: { width: 250, height: 250 },
+    formatsToSupport: targetFormats
+  };
+
+  html5QrcodeScannerInstance.start(
+    { facingMode: "environment" },
+    scannerConfig,
+    function onScanSuccess(decodedText) {
+      if (decodedText) {
+        var cleanCode = decodedText.toString().trim();
+        if (activeScanTarget === 'part') {
+          searchBox.value = cleanCode;
+        } else {
+          supplierBox.value = cleanCode;
+        }
+        renderTable();
+        stopUniversalScanner();
+      }
+    },
+    function onScanFailure(error) {}
+  ).catch(err => {
+    console.error("Camera startup error:", err);
+    alert("Camera Access Error: Ensure you give the site camera permission.");
+    stopUniversalScanner();
+  });
+}
+
+scannerClose.addEventListener('click', stopUniversalScanner);
+
+function stopUniversalScanner() {
+  if (html5QrcodeScannerInstance) {
+    html5QrcodeScannerInstance.stop().then(() => {
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = ""; 
+      scannerOverlay.style.display = 'none';
+    }).catch(err => {
+      html5QrcodeScannerInstance = null;
+      document.getElementById('scannerReader').innerHTML = "";
+      scannerOverlay.style.display = 'none';
+    });
+  } else {
+    scannerOverlay.style.display = 'none';
+  }
+}
+
+scannerOverlay.addEventListener('click', function(e){ if (e.target === scannerOverlay) stopUniversalScanner(); });
+</script>
+</body>
+</html>
+header { 
   padding: 10px 16px; 
   background: var(--panel); 
   border-bottom: 1px solid var(--accent); 
